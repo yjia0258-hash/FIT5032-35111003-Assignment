@@ -1,178 +1,168 @@
 <template>
-  <main class="page">
-    <section class="panel">
-      <header class="panel__header">
-        <h1 class="panel__title">Sign Up</h1>
-        <p class="panel__subtitle">Please complete the fields below. Required fields are marked with “*”.</p>
-      </header>
+  <main class="container mt-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="card-title text-center mb-2">Sign Up</h1>
+        <p class="text-muted text-center mb-4">
+          Please complete the fields below. Required fields are marked with “*”.
+        </p>
 
-      <form class="form" @submit.prevent="onSubmit" novalidate>
-        <fieldset class="fieldset">
-          <legend class="legend">Account</legend>
+  
+        <form @submit.prevent="onSubmit" novalidate>
+       
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 fs-6 text-muted">Account</legend>
 
-          <div class="grid-2">
-            <!-- Username -->
-            <div class="input-block">
-              <label for="username" class="label">Username *</label>
-              <input
-                id="username"
-                class="input"
-                type="text"
-                v-model.trim="model.username"
-                @blur="markTouched('username'); checkName()"
-                @input="checkNameDebounced()"
-                :aria-invalid="!!errs.username || undefined"
-                :aria-describedby="errs.username ? 'username-err' : undefined"
-              />
-              <p v-if="errs.username" id="username-err" class="error">{{ errs.username }}</p>
-              <p class="hint">Minimum 3 characters.</p>
+            <div class="row g-3">
+              <!-- Username -->
+              <div class="col-md-6">
+                <label for="username" class="form-label">Username *</label>
+                <input
+                  id="username"
+                  type="text"
+                  class="form-control"
+                  v-model.trim="model.username"
+                  @blur="markTouched('username'); checkName()"
+                  @input="checkNameDebounced()"
+                  :aria-invalid="!!errs.username || undefined"
+                  :aria-describedby="errs.username ? 'username-err' : undefined"
+                />
+                <div v-if="errs.username" id="username-err" class="text-danger small mt-1">{{ errs.username }}</div>
+                <div class="form-text">Minimum 3 characters.</div>
+              </div>
+
+              <!-- Password -->
+              <div class="col-md-6">
+                <label for="password" class="form-label">Password *</label>
+                <input
+                  id="password"
+                  type="password"
+                  class="form-control"
+                  v-model="model.password"
+                  @blur="markTouched('password'); checkPassword()"
+                  @input="checkPasswordDebounced()"
+                  :aria-invalid="!!errs.password || undefined"
+                  :aria-describedby="errs.password ? 'password-err' : undefined"
+                />
+                <div v-if="errs.password" id="password-err" class="text-danger small mt-1">{{ errs.password }}</div>
+                <div class="form-text">At least 8 chars, include upper, lower, number &amp; special.</div>
+              </div>
             </div>
 
-            <!-- Password -->
-            <div class="input-block">
-              <label for="password" class="label">Password *</label>
-              <input
-                id="password"
-                class="input"
-                type="password"
-                v-model="model.password"
-                @blur="markTouched('password'); checkPassword()"
-                @input="checkPasswordDebounced()"
-                :aria-invalid="!!errs.password || undefined"
-                :aria-describedby="errs.password ? 'password-err' : undefined"
-              />
-              <p v-if="errs.password" id="password-err" class="error">{{ errs.password }}</p>
-              <p class="hint">At least 8 chars, include upper, lower, number & special.</p>
+            <div class="row g-3 mt-1">
+              <!-- Email -->
+              <div class="col-md-6">
+                <label for="email" class="form-label">Email *</label>
+                <input
+                  id="email"
+                  type="email"
+                  class="form-control"
+                  v-model.trim="model.email"
+                  @blur="markTouched('email'); checkEmail()"
+                  @input="checkEmailDebounced()"
+                  :aria-invalid="!!errs.email || undefined"
+                  :aria-describedby="errs.email ? 'email-err' : undefined"
+                />
+                <div v-if="errs.email" id="email-err" class="text-danger small mt-1">{{ errs.email }}</div>
+                <div class="form-text">Example: name@example.com</div>
+              </div>
+
+              <!-- Phone (optional) -->
+              <div class="col-md-6">
+                <label for="phone" class="form-label">Phone (optional)</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  class="form-control"
+                  v-model.trim="model.phone"
+                  @blur="markTouched('phone'); checkPhone()"
+                  @input="checkPhoneDebounced()"
+                  :aria-invalid="!!errs.phone || undefined"
+                  :aria-describedby="errs.phone ? 'phone-err' : undefined"
+                />
+                <div v-if="errs.phone" id="phone-err" class="text-danger small mt-1">{{ errs.phone }}</div>
+                <div class="form-text">Digits only, 8–15 characters if provided.</div>
+              </div>
             </div>
+          </fieldset>
+
+          <!-- Profile -->
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-2 fs-6 text-muted">Profile</legend>
+
+            <div class="row g-3">
+              <!-- Gender -->
+              <div class="col-md-6">
+                <label for="gender" class="form-label">Gender</label>
+                <select id="gender" class="form-select" v-model="model.gender">
+                  <option value="" disabled>Select…</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="mt-3">
+              <label for="reason" class="form-label">Reason for joining</label>
+              <textarea
+                id="reason"
+                class="form-control"
+                rows="3"
+                v-model.trim="model.reason"
+              ></textarea>
+            </div>
+          </fieldset>
+
+  
+          <div class="d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-primary" :disabled="!canSubmit">Sign Up</button>
           </div>
+        </form>
+      </div>
+    </div>
 
-          <div class="grid-2">
-            <!-- Email -->
-            <div class="input-block">
-              <label for="email" class="label">Email *</label>
-              <input
-                id="email"
-                class="input"
-                type="email"
-                v-model.trim="model.email"
-                @blur="markTouched('email'); checkEmail()"
-                @input="checkEmailDebounced()"
-                :aria-invalid="!!errs.email || undefined"
-                :aria-describedby="errs.email ? 'email-err' : undefined"
-              />
-              <p v-if="errs.email" id="email-err" class="error">{{ errs.email }}</p>
-              <p class="hint">Example: name@example.com</p>
-            </div>
+    <!-- Load status -->
+    <div class="card mt-3" v-if="loading || loadError">
+      <div class="card-body">
+        <h2 class="h5 mb-2">Users (from /public/data/USERS.json)</h2>
+        <div v-if="loading">Loading…</div>
+        <div v-else-if="loadError" class="text-danger">Failed to load: {{ loadError }}</div>
+      </div>
+    </div>
 
-            <!-- Phone (optional) -->
-            <div class="input-block">
-              <label for="phone" class="label">Phone (optional)</label>
-              <input
-                id="phone"
-                class="input"
-                type="tel"
-                v-model.trim="model.phone"
-                @blur="markTouched('phone'); checkPhone()"
-                @input="checkPhoneDebounced()"
-                :aria-invalid="!!errs.phone || undefined"
-                :aria-describedby="errs.phone ? 'phone-err' : undefined"
-              />
-              <p v-if="errs.phone" id="phone-err" class="error">{{ errs.phone }}</p>
-              <p class="hint">Digits only, 8–15 characters if provided.</p>
-            </div>
+    <!-- Registered Users -->
+    <div class="mt-3" v-if="hasSubmitted && cards.length">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 m-0">Registered Users</h2>
+        <button class="btn btn-outline-danger btn-sm" @click="clearAll">Clear All</button>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-4" v-for="(c, i) in cards" :key="i">
+          <div class="card h-100">
+            <div class="card-header fw-semibold">Registration Info</div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item"><strong>Username:</strong> {{ c.username }}</li>
+              <li class="list-group-item"><strong>Email:</strong> {{ c.email }}</li>
+              <li class="list-group-item"><strong>Phone:</strong> {{ c.phone || '—' }}</li>
+              <li class="list-group-item"><strong>Password:</strong> {{ c.password }}</li>
+              <li class="list-group-item"><strong>Gender:</strong> {{ c.gender || '—' }}</li>
+              <li class="list-group-item"><strong>Reason:</strong> {{ c.reason || '—' }}</li>
+            </ul>
           </div>
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="legend">Profile</legend>
-
-          <div class="grid-2">
-            <!-- Gender -->
-            <div class="input-block">
-              <label for="gender" class="label">Gender</label>
-              <select
-                id="gender"
-                class="select"
-                v-model="model.gender"
-              >
-                <option value="" disabled>Select…</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Reason -->
-          <div class="input-block">
-            <label for="reason" class="label">Reason for joining</label>
-            <textarea
-              id="reason"
-              class="textarea"
-              rows="3"
-              v-model.trim="model.reason"
-            ></textarea>
-          </div>
-        </fieldset>
-
-        <!-- Actions -->
-        <div class="actions">
-          <button type="submit" class="btn btn--primary" :disabled="!canSubmit">Sign Up</button>
         </div>
-      </form>
-    </section>
-
-    <!-- Optional: fetch status (shows only when loading or error) -->
-    <section class="panel" v-if="loading || loadError" style="margin-top: 12px;">
-      <h2>Users (from /public/data/users.json)</h2>
-      <div v-if="loading">Loading…</div>
-      <div v-else-if="loadError" class="error">Failed to load: {{ loadError }}</div>
-    </section>
-
-    <!-- Cards (Dynamic Data render) -->
-    <!-- Only show AFTER first successful submit in this session -->
-    <section class="cards" v-if="hasSubmitted && cards.length">
-      <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px;">
-        <h2 class="cards__title">Registered Users</h2>
-        <button class="btn btn-secondary" @click="clearAll">Clear All</button>
       </div>
-
-      <div class="cards__wrap">
-        <article class="card" v-for="(c, i) in cards" :key="i">
-          <header class="card__hd">Registration Info</header>
-          <ul class="card__list">
-            <li class="card__item"><strong>Username:</strong> {{ c.username }}</li>
-            <li class="card__item"><strong>Email:</strong> {{ c.email }}</li>
-            <li class="card__item"><strong>Phone:</strong> {{ c.phone || '—' }}</li>
-            <li class="card__item"><strong>Password:</strong> {{ c.password }}</li>
-            <li class="card__item"><strong>Gender:</strong> {{ c.gender || '—' }}</li>
-            <li class="card__item"><strong>Reason:</strong> {{ c.reason || '—' }}</li>
-          </ul>
-        </article>
-      </div>
-    </section>
+    </div>
   </main>
 </template>
 
 <script setup>
-/**
- * Registration form with:
- * - Username/Password validations
- * - Email required + format
- * - Phone optional; digits 8–15 if present
- * - Dynamic list rendered from reactive array
- * - localStorage persistence
- * - Fetch seed from /public/data/USERS.json
- * - hasSubmitted flag to hide list until first successful submit
- * - NEW: clearAll() to empty list & localStorage
- */
-
 import { ref, computed, onMounted, watch } from 'vue'
 
-// Show list only after first successful submit in this session
 const hasSubmitted = ref(false)
 
-// Reactive form model
 const model = ref({
   username: '',
   password: '',
@@ -182,7 +172,6 @@ const model = ref({
   gender: ''
 })
 
-// Validation errors
 const errs = ref({
   username: null,
   password: null,
@@ -190,7 +179,6 @@ const errs = ref({
   phone: null
 })
 
-// Touched flags
 const touched = ref({
   username: false,
   password: false,
@@ -198,14 +186,11 @@ const touched = ref({
   phone: false
 })
 
-// Dynamic data list
 const cards = ref([])
 
-// Fetch state
 const loading = ref(false)
 const loadError = ref('')
 
-// Seed from /public/data/USERS.json (can be an empty array)
 onMounted(async () => {
   try {
     loading.value = true
@@ -229,21 +214,18 @@ onMounted(async () => {
   }
 })
 
-// Restore from localStorage if exists
 try {
   const saved = localStorage.getItem('cards')
   if (saved) {
     const parsed = JSON.parse(saved)
     if (Array.isArray(parsed)) cards.value = parsed
   }
-} catch { /* ignore malformed storage */ }
+} catch {}
 
-// Persist to localStorage whenever cards change
 watch(cards, (v) => {
   try { localStorage.setItem('cards', JSON.stringify(v)) } catch {}
 }, { deep: true })
 
-// ---- Validations ----
 const checkName = () => {
   const v = model.value.username?.trim() || ''
   if (!v) errs.value.username = 'Username is required.'
@@ -284,7 +266,6 @@ const checkPhone = () => {
   else errs.value.phone = null
 }
 
-// Debounced validators (lightweight)
 let _nameTick = 0, _pwdTick = 0, _emailTick = 0, _phoneTick = 0
 const checkNameDebounced = () => {
   const t = ++_nameTick
@@ -305,24 +286,21 @@ const checkPhoneDebounced = () => {
 
 const markTouched = (key) => { touched.value[key] = true }
 
-// Can submit only if required fields are valid
 const canSubmit = computed(() =>
   !errs.value.username && !errs.value.password && !errs.value.email && !errs.value.phone &&
   model.value.username && model.value.password && model.value.email
 )
 
-// Submit handler
 const onSubmit = () => {
   touched.value = { username: true, password: true, email: true, phone: true }
   checkName(); checkPassword(); checkEmail(); checkPhone()
   if (!errs.value.username && !errs.value.password && !errs.value.email && !errs.value.phone) {
     cards.value.push({ ...model.value })
-    hasSubmitted.value = true           // show list from now on
+    hasSubmitted.value = true
     resetForm()
   }
 }
 
-// Reset form
 const resetForm = () => {
   model.value = {
     username: '',
@@ -336,10 +314,9 @@ const resetForm = () => {
   touched.value = { username: false, password: false, email: false, phone: false }
 }
 
-// Clear all registrations and storage
 const clearAll = () => {
   cards.value = []
   localStorage.removeItem('cards')
-  hasSubmitted.value = false   // hide the list section again
+  hasSubmitted.value = false
 }
 </script>
