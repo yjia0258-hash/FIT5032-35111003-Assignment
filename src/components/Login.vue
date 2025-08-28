@@ -86,17 +86,10 @@
               class="textarea"
               rows="3"
               v-model.trim="model.reason"
-            ></textarea>
-            <p class="hint">Optional. Briefly explain your purpose.</p>
+            >
+          </textarea>
           </div>
         </fieldset>
-
-        <!-- Live region for screen readers -->
-        <div class="sr-live" aria-live="polite">
-          <span v-if="errs.username">{{ errs.username }}</span>
-          <span v-if="errs.password">{{ errs.password }}</span>
-        </div>
-
         <div class="actions">
           <button type="submit" class="btn btn--primary" :disabled="!canSubmit">Submit</button>
           <button type="button" class="btn" @click="resetForm">Clear</button>
