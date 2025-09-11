@@ -1,13 +1,18 @@
 <script setup>
-// import HelloWorld from './components/HelloWorld.vue'
-// import TheWelcome from './components/TheWelcome.vue'
-import Login from './components/Login.vue';
+
 </script>
 
 <template>
-  
-    
-  <Login /> 
+  <div class="container mt-4">
+    <!-- Simple navigation -->
+    <nav class="mb-3 d-flex gap-2">
+      <RouterLink class="btn btn-outline-primary" to="/login">Login</RouterLink>
+      <RouterLink class="btn btn-outline-success" to="/register">Register</RouterLink>
+    </nav>
+
+    <!-- Route outlet: renders the matched page (Login.vue / Register.vue) -->
+    <RouterView />
+  </div>
 </template>
 
 <style scoped>
