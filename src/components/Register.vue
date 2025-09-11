@@ -7,9 +7,9 @@
           Please complete the fields below. Required fields are marked with “*”.
         </p>
 
-  
+        <!-- Registration form -->
         <form @submit.prevent="onSubmit" novalidate>
-       
+          <!-- Account -->
           <fieldset class="border rounded p-3 mb-3">
             <legend class="float-none w-auto px-2 fs-6 text-muted">Account</legend>
 
@@ -101,6 +101,16 @@
                   <option value="other">Other</option>
                 </select>
               </div>
+
+              <!-- Role (demo: choose user/admin) -->
+              <div class="col-md-6">
+                <label for="role" class="form-label">Role *</label>
+                <select id="role" class="form-select" v-model="model.role" required>
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <div class="form-text">Demo only: choose a role for testing.</div>
+              </div>
             </div>
 
             <!-- Reason -->
@@ -115,61 +125,35 @@
             </div>
           </fieldset>
 
-  
+          <!-- Actions -->
           <div class="d-flex justify-content-end gap-2">
             <button type="submit" class="btn btn-primary" :disabled="!canSubmit">Sign Up</button>
           </div>
         </form>
       </div>
     </div>
-
-    <!-- Load status -->
-    <div class="card mt-3" v-if="loading || loadError">
-      <div class="card-body">
-        <h2 class="h5 mb-2">Users (from /public/data/USERS.json)</h2>
-        <div v-if="loading">Loading…</div>
-        <div v-else-if="loadError" class="text-danger">Failed to load: {{ loadError }}</div>
-      </div>
-    </div>
-
-    <!-- Registered Users -->
-    <div class="mt-3" v-if="hasSubmitted && cards.length">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h2 class="h5 m-0">Registered Users</h2>
-        <button class="btn btn-outline-danger btn-sm" @click="clearAll">Clear All</button>
-      </div>
-
-      <div class="row g-3">
-        <div class="col-md-4" v-for="(c, i) in cards" :key="i">
-          <div class="card h-100">
-            <div class="card-header fw-semibold">Registration Info</div>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item"><strong>Username:</strong> {{ c.username }}</li>
-              <li class="list-group-item"><strong>Email:</strong> {{ c.email }}</li>
-              <li class="list-group-item"><strong>Phone:</strong> {{ c.phone || '—' }}</li>
-              <li class="list-group-item"><strong>Password:</strong> {{ c.password }}</li>
-              <li class="list-group-item"><strong>Gender:</strong> {{ c.gender || '—' }}</li>
-              <li class="list-group-item"><strong>Reason:</strong> {{ c.reason || '—' }}</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+// Vue core
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-const hasSubmitted = ref(false)
+// Local auth (demo only; uses localStorage)
+import { registerUser } from '@/lib/auth-local' // or: '../lib/auth-local' if you didn't set @ alias
 
+const router = useRouter()
+
+/* ---------- Form state ---------- */
 const model = ref({
   username: '',
   password: '',
   email: '',
   phone: '',
   reason: '',
-  gender: ''
+  gender: '',
+  role: 'user'
 })
 
 const errs = ref({
@@ -186,46 +170,7 @@ const touched = ref({
   phone: false
 })
 
-const cards = ref([])
-
-const loading = ref(false)
-const loadError = ref('')
-
-onMounted(async () => {
-  try {
-    loading.value = true
-    const res = await fetch('/data/USERS.json')
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    cards.value = Array.isArray(data)
-      ? data.map(u => ({
-          username: u.username ?? '',
-          password: u.password ?? '',
-          email: u.email ?? '',
-          phone: u.phone ?? '',
-          gender: u.gender ?? '',
-          reason: u.reason ?? ''
-        }))
-      : []
-  } catch (e) {
-    loadError.value = String(e)
-  } finally {
-    loading.value = false
-  }
-})
-
-try {
-  const saved = localStorage.getItem('cards')
-  if (saved) {
-    const parsed = JSON.parse(saved)
-    if (Array.isArray(parsed)) cards.value = parsed
-  }
-} catch {}
-
-watch(cards, (v) => {
-  try { localStorage.setItem('cards', JSON.stringify(v)) } catch {}
-}, { deep: true })
-
+/* ---------- Validation ---------- */
 const checkName = () => {
   const v = model.value.username?.trim() || ''
   if (!v) errs.value.username = 'Username is required.'
@@ -266,57 +211,40 @@ const checkPhone = () => {
   else errs.value.phone = null
 }
 
+/* Debounced checks */
 let _nameTick = 0, _pwdTick = 0, _emailTick = 0, _phoneTick = 0
-const checkNameDebounced = () => {
-  const t = ++_nameTick
-  setTimeout(() => t === _nameTick && touched.value.username && checkName(), 120)
-}
-const checkPasswordDebounced = () => {
-  const t = ++_pwdTick
-  setTimeout(() => t === _pwdTick && touched.value.password && checkPassword(), 120)
-}
-const checkEmailDebounced = () => {
-  const t = ++_emailTick
-  setTimeout(() => t === _emailTick && touched.value.email && checkEmail(), 120)
-}
-const checkPhoneDebounced = () => {
-  const t = ++_phoneTick
-  setTimeout(() => t === _phoneTick && touched.value.phone && checkPhone(), 120)
-}
+const checkNameDebounced = () => { const t = ++_nameTick; setTimeout(() => t === _nameTick && touched.value.username && checkName(), 120) }
+const checkPasswordDebounced = () => { const t = ++_pwdTick; setTimeout(() => t === _pwdTick && touched.value.password && checkPassword(), 120) }
+const checkEmailDebounced = () => { const t = ++_emailTick; setTimeout(() => t === _emailTick && touched.value.email && checkEmail(), 120) }
+const checkPhoneDebounced = () => { const t = ++_phoneTick; setTimeout(() => t === _phoneTick && touched.value.phone && checkPhone(), 120) }
 
 const markTouched = (key) => { touched.value[key] = true }
 
+/* Submit is allowed only when required fields are valid */
 const canSubmit = computed(() =>
   !errs.value.username && !errs.value.password && !errs.value.email && !errs.value.phone &&
   model.value.username && model.value.password && model.value.email
 )
 
-const onSubmit = () => {
+/* ---------- Submit ---------- */
+const onSubmit = async () => {
+  // trigger validations
   touched.value = { username: true, password: true, email: true, phone: true }
   checkName(); checkPassword(); checkEmail(); checkPhone()
-  if (!errs.value.username && !errs.value.password && !errs.value.email && !errs.value.phone) {
-    cards.value.push({ ...model.value })
-    hasSubmitted.value = true
-    resetForm()
-  }
-}
+  if (errs.value.username || errs.value.password || errs.value.email || errs.value.phone) return
 
-const resetForm = () => {
-  model.value = {
-    username: '',
-    password: '',
-    email: '',
-    phone: '',
-    reason: '',
-    gender: ''
-  }
-  errs.value = { username: null, password: null, email: null, phone: null }
-  touched.value = { username: false, password: false, email: false, phone: false }
-}
+  try {
+    await registerUser({
+      email: model.value.email.trim(),
+      password: model.value.password,           // demo only (plain text in localStorage)
+      username: model.value.username.trim(),
+      role: model.value.role || 'user'
+    })
 
-const clearAll = () => {
-  cards.value = []
-  localStorage.removeItem('cards')
-  hasSubmitted.value = false
+    // ✅ Always go to Login after successful registration
+    router.replace('/login')
+  } catch (e) {
+    alert(e?.message || 'Registration failed.')
+  }
 }
 </script>
