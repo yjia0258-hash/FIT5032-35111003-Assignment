@@ -10,9 +10,7 @@
         role="radio"
         @click="onRate(n)"
         :title="`Rate ${n}`"
-      >
-        ★
-      </button>
+      >★</button>
     </div>
 
     <div class="meta">
@@ -26,10 +24,9 @@
 
 <script setup>
 import { ref, watchEffect, computed } from 'vue'
-import { getCurrentUser } from '@/lib/auth-local'            
-import { getItemStats, getUserRating, rateItem } from '@/lib/ratings'
+import { getCurrentUser } from '../lib/auth-local'
+import { getItemStats, getUserRating, rateItem } from '../lib/rating'
 
-// ✅ JS runtime props definition（替代 TS 泛型）
 const props = defineProps({
   itemId: { type: String, required: true }
 })
@@ -64,34 +61,12 @@ const avgLabel = computed(() =>
 </script>
 
 <style scoped>
-.rating {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-  text-align: center;
-}
-.stars {
-  display: inline-flex;
-  gap: 6px;
-}
-.star {
-  font-size: 28px;
-  line-height: 1;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  opacity: 0.5;
-  transition: transform .08s ease, opacity .1s;
-}
-.star:hover { transform: scale(1.1); opacity: 0.9; }
-.star.active { color: #ffb400; opacity: 1; }
-.meta {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-  color: #555;
-}
-.meta .avg { font-weight: 600; }
-.meta .mine { color: #007bff; }
+.rating { display:inline-flex; flex-direction:column; gap:6px; align-items:center; text-align:center; }
+.stars { display:inline-flex; gap:6px; }
+.star { font-size:28px; line-height:1; background:transparent; border:none; cursor:pointer; opacity:.5; transition:transform .08s, opacity .1s; }
+.star:hover { transform:scale(1.1); opacity:.9; }
+.star.active { color:#ffb400; opacity:1; }
+.meta { display:flex; gap:8px; font-size:14px; color:#555; }
+.meta .avg { font-weight:600; }
+.meta .mine { color:#007bff; }
 </style>

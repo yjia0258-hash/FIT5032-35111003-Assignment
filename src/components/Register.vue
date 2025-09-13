@@ -26,6 +26,10 @@
                   @input="checkNameDebounced()"
                   :aria-invalid="!!errs.username || undefined"
                   :aria-describedby="errs.username ? 'username-err' : undefined"
+                  autocomplete="username"
+                  minlength="3"
+                  maxlength="30"
+                  required
                 />
                 <div v-if="errs.username" id="username-err" class="text-danger small mt-1">{{ errs.username }}</div>
                 <div class="form-text">Minimum 3 characters.</div>
@@ -43,6 +47,10 @@
                   @input="checkPasswordDebounced()"
                   :aria-invalid="!!errs.password || undefined"
                   :aria-describedby="errs.password ? 'password-err' : undefined"
+                  autocomplete="new-password"
+                  minlength="8"
+                  maxlength="64"
+                  required
                 />
                 <div v-if="errs.password" id="password-err" class="text-danger small mt-1">{{ errs.password }}</div>
                 <div class="form-text">At least 8 chars, include upper, lower, number &amp; special.</div>
@@ -62,6 +70,9 @@
                   @input="checkEmailDebounced()"
                   :aria-invalid="!!errs.email || undefined"
                   :aria-describedby="errs.email ? 'email-err' : undefined"
+                  autocomplete="email"
+                  maxlength="100"
+                  required
                 />
                 <div v-if="errs.email" id="email-err" class="text-danger small mt-1">{{ errs.email }}</div>
                 <div class="form-text">Example: name@example.com</div>
@@ -79,6 +90,10 @@
                   @input="checkPhoneDebounced()"
                   :aria-invalid="!!errs.phone || undefined"
                   :aria-describedby="errs.phone ? 'phone-err' : undefined"
+                  inputmode="numeric"
+                  pattern="\\d{8,15}"
+                  minlength="8"
+                  maxlength="15"
                 />
                 <div v-if="errs.phone" id="phone-err" class="text-danger small mt-1">{{ errs.phone }}</div>
                 <div class="form-text">Digits only, 8–15 characters if provided.</div>
@@ -121,6 +136,8 @@
                 class="form-control"
                 rows="3"
                 v-model.trim="model.reason"
+                maxlength="500"
+                placeholder="Optional (max 500 characters)"
               ></textarea>
             </div>
           </fieldset>
@@ -136,12 +153,15 @@
 </template>
 
 <script setup>
-// Vue core
+// Vue
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
+// Security: sanitize free text to prevent XSS
+import DOMPurify from 'dompurify'
+
 // Local auth (demo only; uses localStorage)
-import { registerUser } from '@/lib/auth-local' // or: '../lib/auth-local' if you didn't set @ alias
+import { registerUser } from '@/lib/auth-local' // or '../lib/auth-local' if no @ alias
 
 const router = useRouter()
 
@@ -234,14 +254,22 @@ const onSubmit = async () => {
   if (errs.value.username || errs.value.password || errs.value.email || errs.value.phone) return
 
   try {
-    await registerUser({
-      email: model.value.email.trim(),
-      password: model.value.password,           // demo only (plain text in localStorage)
-      username: model.value.username.trim(),
-      role: model.value.role || 'user'
+    // sanitize free-text to prevent XSS (no HTML allowed)
+    const safeReason = DOMPurify.sanitize(model.value.reason || '', {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: []
     })
 
-    // ✅ Always go to Login after successful registration
+    await registerUser({
+      email: model.value.email.trim(),
+      password: model.value.password,           // demo only; backend should hash/verify
+      username: model.value.username.trim(),
+      role: model.value.role || 'user',
+      // if your backend needs reason/gender/phone later, you can pass them too
+      // here we keep only what's necessary for local demo auth
+    })
+
+    // Redirect to Login after successful registration
     router.replace('/login')
   } catch (e) {
     alert(e?.message || 'Registration failed.')
