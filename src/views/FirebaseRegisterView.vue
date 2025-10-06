@@ -117,7 +117,7 @@
                 </select>
               </div>
 
-              <!-- Role (demo: choose user/admin) -->
+              <!-- Role -->
               <div class="col-md-6">
                 <label for="role" class="form-label">Role *</label>
                 <select id="role" class="form-select" v-model="model.role" required>
@@ -160,8 +160,9 @@ import { useRouter } from 'vue-router'
 // Security: sanitize free text to prevent XSS
 import DOMPurify from 'dompurify'
 
-// Local auth (demo only; uses localStorage)
-import { registerUser } from '@/lib/auth-local' // or '../lib/auth-local' if no @ alias
+// Firebase Auth
+import { auth } from '@/lib/firebase'
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
 
 const router = useRouter()
 
@@ -248,31 +249,34 @@ const canSubmit = computed(() =>
 
 /* ---------- Submit ---------- */
 const onSubmit = async () => {
-  // trigger validations
   touched.value = { username: true, password: true, email: true, phone: true }
   checkName(); checkPassword(); checkEmail(); checkPhone()
   if (errs.value.username || errs.value.password || errs.value.email || errs.value.phone) return
 
   try {
-    // sanitize free-text to prevent XSS (no HTML allowed)
+    // sanitize free-text to prevent XSS
     const safeReason = DOMPurify.sanitize(model.value.reason || '', {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: []
     })
 
-    await registerUser({
-      email: model.value.email.trim(),
-      password: model.value.password,           // demo only; backend should hash/verify
-      username: model.value.username.trim(),
-      role: model.value.role || 'user',
-      // if your backend needs reason/gender/phone later, you can pass them too
-      // here we keep only what's necessary for local demo auth
-    })
+    // Firebase registration
+    const cred = await createUserWithEmailAndPassword(auth, model.value.email.trim(), model.value.password)
 
-    // Redirect to Login after successful registration
-    router.replace('/login')
+    // Send email verification
+    try {
+      await sendEmailVerification(cred.user)
+      alert('Verification email sent! Please check your inbox.')
+    } catch (err) {
+      console.warn('Email verification error:', err)
+    }
+
+    // TODO: save additional fields (username, role, gender, phone, reason) to Firestore if needed
+
+    // Redirect to login
+    router.replace('/FireLogin')
   } catch (e) {
-    alert(e?.message || 'Registration failed.')
+    alert(e?.message || 'Firebase Registration failed.')
   }
 }
 </script>

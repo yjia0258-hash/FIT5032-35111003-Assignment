@@ -1,49 +1,73 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getCurrentUser, logoutUser } from './lib/auth-local'  
+
+// Firebase
+import { auth } from '@/lib/firebase'        // If you don't have @ alias, use '../lib/firebase'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 
 const router = useRouter()
 const route = useRoute()
-const me = ref(getCurrentUser())
 
+// Current user from Firebase; only keep the fields you want to display in the UI
+const me = ref(null)
 
-router.afterEach(() => {
-  me.value = getCurrentUser()
+// Listen for authentication state changes
+let unsubscribe
+onMounted(() => {
+  unsubscribe = onAuthStateChanged(auth, (user) => {
+    me.value = user
+      ? { email: user.email ?? '', uid: user.uid } // You can extend with displayName, etc.
+      : null
+  })
+})
+onBeforeUnmount(() => {
+  if (unsubscribe) unsubscribe()
 })
 
-
-const hideNavOn = ['/login', '/register']
+// Paths where navigation should be hidden
+const hideNavOn = ['/FireLogin', '/FireRegister']
 const showNav = computed(() => !hideNavOn.includes(route.path))
 
-function onLogout() {
-  logoutUser()
-  me.value = null
-  router.push('/login')
+// Optional: role management (update this with real Firestore/custom claims logic)
+const isAdmin = computed(() => false)
+
+// Logout user
+async function onLogout() {
+  try {
+    await signOut(auth)
+  } finally {
+    me.value = null
+    router.push('/FireLogin')
+  }
 }
 </script>
 
 <template>
   <div class="app-container">
-    
+    <!-- Show top navigation only if not on login/register -->
     <nav v-if="showNav" class="topbar">
       <div class="left">
-     
-        <RouterLink class="btn ghost" to="/home">Home</RouterLink>
-        
+        <!-- Home only visible if logged in -->
+        <RouterLink v-if="me" class="btn ghost" to="/home">Home</RouterLink>
+
+        <!-- Admin section (only shown if isAdmin is true) -->
         <RouterLink
-          v-if="me && me.role === 'admin'"
+          v-if="me && isAdmin"
           class="btn ghost danger"
           to="/admin"
-        >Admin</RouterLink>
+        >
+          Admin
+        </RouterLink>
       </div>
 
       <div class="right">
-        <span v-if="me" class="me">Hi, {{ me.username || me.email }} ({{ me.role }})</span>
+        <span v-if="me" class="me">
+          Hi, {{ me.email || me.uid }}
+        </span>
         <button v-if="me" class="btn outline" @click="onLogout">Logout</button>
       </div>
     </nav>
-
 
     <main class="page">
       <RouterView />
@@ -57,7 +81,6 @@ function onLogout() {
   display: flex;
   flex-direction: column;
 }
-
 
 .topbar {
   display: flex;
@@ -76,12 +99,10 @@ function onLogout() {
 }
 .me { font-size: 14px; color: #555; }
 
-
 .page {
   flex: 1;
   padding: 16px;
 }
-
 
 .btn {
   border: none;
@@ -94,21 +115,13 @@ function onLogout() {
   background: transparent;
   border: 1px solid #ddd;
 }
-.btn.ghost:hover {
-   background: #f6f6f6; 
-  }
+.btn.ghost:hover { background: #f6f6f6; }
 .btn.outline {
   background: transparent;
   border: 1px solid #333;
   color: #333;
 }
-.btn.outline:hover { 
-  background: #333; color: #fff; 
-}
-.btn.danger {
-   border-color: #e74c3c; color: #e74c3c;
-   }
-.btn.danger:hover {
-   background: #e74c3c; color: #fff; 
-   }
+.btn.outline:hover { background: #333; color: #fff; }
+.btn.danger { border-color: #e74c3c; color: #e74c3c; }
+.btn.danger:hover { background: #e74c3c; color: #fff; }
 </style>

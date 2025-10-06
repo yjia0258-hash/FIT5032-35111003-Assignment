@@ -2,7 +2,6 @@
   <div class="login-wrapper">
     <h2 class="mb-3 text-center">Login</h2>
 
-    <!-- Login form -->
     <form @submit.prevent="submit" class="d-flex flex-column gap-3">
       <input
         v-model="email"
@@ -19,7 +18,7 @@
         required
       />
 
-      <!-- Captcha block -->
+      <!-- Captcha -->
       <div class="captcha">
         <div class="captcha__code" aria-label="Verification code">{{ captcha }}</div>
         <button type="button" class="btn btn-outline-secondary btn-sm" @click="generateCaptcha">
@@ -27,7 +26,7 @@
         </button>
       </div>
 
-      <!-- Input: text + numeric-only + strict 6 digits -->
+      <!-- 6-digit numeric code -->
       <input
         v-model="captchaInput"
         type="text"
@@ -45,18 +44,20 @@
       <button type="submit" class="btn btn-primary w-100">Login</button>
     </form>
 
-    <!-- Link to register page if user has no account -->
     <p class="mt-3 text-center">
       No account?
-      <RouterLink to="/register">Go to Register</RouterLink>
+      <RouterLink to="/FireRegister">Go to Register</RouterLink>
     </p>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { loginUser } from '../lib/auth-local'
+import { useRouter } from 'vue-router'
+import { auth } from '@/lib/firebase'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+
+const router = useRouter()
 
 // form state
 const email = ref('')
@@ -66,19 +67,8 @@ const password = ref('')
 const captcha = ref('')       // generated 6-digit code
 const captchaInput = ref('')  // user input
 
-const router = useRouter()
-const route = useRoute()
-
-// ====== Added: fallback path if /home does not exist ======
-const FALLBACK_AFTER_LOGIN = '/reviews'
-function pathExists(p) {
-  return router.getRoutes().some(r => r.path === p)
-}
-// ==========================================================
-
-// Generate a 6-digit numeric captcha (preserve leading zeros if any)
+// Generate a 6-digit numeric captcha (keeps leading zeros)
 function generateCaptcha() {
-  // use crypto for better randomness than Math.random()
   const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000
   captcha.value = n.toString().padStart(6, '0')
   captchaInput.value = ''
@@ -88,13 +78,8 @@ onMounted(() => {
   generateCaptcha()
 })
 
-function isSafeRedirect(p) {
-  return typeof p === 'string' && p.startsWith('/') && !p.startsWith('//')
-}
-
-// Handle login logic
 async function submit() {
-  // Validate captcha input
+  // Validate captcha
   const code = (captchaInput.value || '').trim()
   if (!/^[0-9]{6}$/.test(code)) {
     alert('Please enter a 6-digit code.')
@@ -107,23 +92,12 @@ async function submit() {
   }
 
   try {
-    // loginUser returns { email, username, role }
-    const me = await loginUser(email.value.trim(), password.value)
+    await signInWithEmailAndPassword(auth, email.value.trim(), password.value)
 
-    // If redirected from a protected route, go back there
-    const redirect = route.query.redirect
-    if (isSafeRedirect(redirect)) {
-      router.replace(redirect)
-      return
-    }
-
-    // Otherwise redirect based on role
-    // Fallback if /home does not exist
-    const normalTarget = pathExists('/home') ? '/home' : FALLBACK_AFTER_LOGIN
-    router.replace(me.role === 'admin' ? '/admin' : normalTarget)
+    // If you don't have /home, change this to your desired route
+    router.replace('/home')
   } catch (e) {
     alert(e?.message || 'Login failed. Please check your email and password.')
-    // regenerate captcha on failure to slow brute force
     generateCaptcha()
   }
 }
@@ -136,7 +110,6 @@ async function submit() {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-
   background: #fff;
   padding: 20px;
   border-radius: 6px;
@@ -146,7 +119,7 @@ async function submit() {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* Captcha block styling */
+/* Captcha block */
 .captcha {
   display: flex;
   align-items: center;
