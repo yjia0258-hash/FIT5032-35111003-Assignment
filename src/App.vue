@@ -1,38 +1,34 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, RouterLink, RouterView } from 'vue-router'
 
 // Firebase
-import { auth } from '@/lib/firebase'        // If you don't have @ alias, use '../lib/firebase'
+import { auth } from '@/lib/firebase'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 
 const router = useRouter()
 const route = useRoute()
 
-// Current user from Firebase; only keep the fields you want to display in the UI
+// Keep minimal user info for header
 const me = ref(null)
 
-// Listen for authentication state changes
+// Listen to auth changes
 let unsubscribe
 onMounted(() => {
   unsubscribe = onAuthStateChanged(auth, (user) => {
-    me.value = user
-      ? { email: user.email ?? '', uid: user.uid } // You can extend with displayName, etc.
-      : null
+    me.value = user ? { email: user.email ?? '', uid: user.uid } : null
   })
 })
-onBeforeUnmount(() => {
-  if (unsubscribe) unsubscribe()
-})
+onBeforeUnmount(() => { unsubscribe && unsubscribe() })
 
-// Paths where navigation should be hidden
+// Hide top nav on these routes
 const hideNavOn = ['/FireLogin', '/FireRegister']
 const showNav = computed(() => !hideNavOn.includes(route.path))
 
-// Optional: role management (update this with real Firestore/custom claims logic)
+// (Optional) role, integrate with claims/Firestore if needed
 const isAdmin = computed(() => false)
 
-// Logout user
+// Logout
 async function onLogout() {
   try {
     await signOut(auth)
@@ -45,30 +41,31 @@ async function onLogout() {
 
 <template>
   <div class="app-container">
-    <!-- Show top navigation only if not on login/register -->
+    <!-- Top navigation (hidden on login/register) -->
     <nav v-if="showNav" class="topbar">
       <div class="left">
-        <!-- Home only visible if logged in -->
-        <RouterLink v-if="me" class="btn ghost" to="/home">Home</RouterLink>
-
-        <!-- Admin section (only shown if isAdmin is true) -->
-        <RouterLink
-          v-if="me && isAdmin"
-          class="btn ghost danger"
-          to="/admin"
-        >
-          Admin
-        </RouterLink>
+        <!-- Visible only after sign-in -->
+        <template v-if="me">
+          <RouterLink to="/home" class="btn ghost">Home</RouterLink>
+          <RouterLink to="/EmailSend" class="btn ghost">Send Email</RouterLink>
+          <RouterLink to="/tables" class="btn ghost">Tables</RouterLink>
+          <RouterLink
+            v-if="isAdmin"
+            to="/admin"
+            class="btn ghost danger"
+          >
+            Admin
+          </RouterLink>
+        </template>
       </div>
 
       <div class="right">
-        <span v-if="me" class="me">
-          Hi, {{ me.email || me.uid }}
-        </span>
+        <span v-if="me" class="me">Hi, {{ me.email || me.uid }}</span>
         <button v-if="me" class="btn outline" @click="onLogout">Logout</button>
       </div>
     </nav>
 
+    <!-- Page body -->
     <main class="page">
       <RouterView />
     </main>
@@ -76,18 +73,25 @@ async function onLogout() {
 </template>
 
 <style scoped>
+/* Layout */
 .app-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
+.page {
+  flex: 1;
+  padding: 16px;
+  background: #f8fafc; /* subtle background */
+}
 
+/* Topbar */
 .topbar {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e5e7eb;
   background: #fff;
 }
 .topbar .left { display: flex; gap: 8px; }
@@ -99,29 +103,28 @@ async function onLogout() {
 }
 .me { font-size: 14px; color: #555; }
 
-.page {
-  flex: 1;
-  padding: 16px;
-}
-
+/* Buttons */
 .btn {
-  border: none;
+  border: 1px solid transparent;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
+  background: #fff;
+  color: #111827;
+  transition: background .15s, color .15s, border-color .15s;
 }
 .btn.ghost {
   background: transparent;
-  border: 1px solid #ddd;
+  border-color: #d1d5db; /* gray-300 */
 }
-.btn.ghost:hover { background: #f6f6f6; }
+.btn.ghost:hover { background: #f3f4f6; } /* gray-100 */
 .btn.outline {
   background: transparent;
-  border: 1px solid #333;
-  color: #333;
+  border-color: #111827;
+  color: #111827;
 }
-.btn.outline:hover { background: #333; color: #fff; }
+.btn.outline:hover { background: #111827; color: #fff; }
 .btn.danger { border-color: #e74c3c; color: #e74c3c; }
 .btn.danger:hover { background: #e74c3c; color: #fff; }
 </style>

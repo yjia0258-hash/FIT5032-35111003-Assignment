@@ -2,46 +2,37 @@
   <div class="login-wrapper">
     <h2 class="mb-3 text-center">Login</h2>
 
-    <form @submit.prevent="submit" class="d-flex flex-column gap-3">
+    <form @submit.prevent="submit" class="d-flex flex-column gap-3" novalidate>
+      <!-- Email -->
       <input
         v-model="email"
         type="email"
         class="form-control"
         placeholder="Email"
         required
-      />
-      <input
-        v-model="password"
-        type="password"
-        class="form-control"
-        placeholder="Password"
-        required
+        autocomplete="username"
       />
 
-      <!-- Captcha -->
-      <div class="captcha">
-        <div class="captcha__code" aria-label="Verification code">{{ captcha }}</div>
-        <button type="button" class="btn btn-outline-secondary btn-sm" @click="generateCaptcha">
-          Refresh
+      <!-- Password + show/hide -->
+      <div class="d-flex gap-2">
+        <input
+          v-model="password"
+          :type="showPassword ? 'text' : 'password'"
+          class="form-control"
+          placeholder="Password"
+          required
+          autocomplete="current-password"
+        />
+        <button type="button" class="btn btn-outline-secondary" @click="toggleShowPassword">
+          {{ showPassword ? 'Hide' : 'Show' }}
         </button>
       </div>
 
-      <!-- 6-digit numeric code -->
-      <input
-        v-model="captchaInput"
-        type="text"
-        class="form-control"
-        placeholder="Enter 6-digit code"
-        inputmode="numeric"
-        autocomplete="one-time-code"
-        pattern="^[0-9]{6}$"
-        minlength="6"
-        maxlength="6"
-        required
-        @input="captchaInput = (captchaInput || '').replace(/[^0-9]/g, '')"
-      />
+      <button type="submit" class="btn btn-primary w-100" :disabled="loading">
+        {{ loading ? 'Signing in...' : 'Login' }}
+      </button>
 
-      <button type="submit" class="btn btn-primary w-100">Login</button>
+      <p v-if="errorText" class="text-danger small mt-2" role="alert">{{ errorText }}</p>
     </form>
 
     <p class="mt-3 text-center">
@@ -52,53 +43,57 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { auth } from '@/lib/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 
+const route = useRoute()
 const router = useRouter()
 
 // form state
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
+const loading = ref(false)
+const errorText = ref('')
 
-// captcha state
-const captcha = ref('')       // generated 6-digit code
-const captchaInput = ref('')  // user input
-
-// Generate a 6-digit numeric captcha (keeps leading zeros)
-function generateCaptcha() {
-  const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000
-  captcha.value = n.toString().padStart(6, '0')
-  captchaInput.value = ''
+function toggleShowPassword() {
+  showPassword.value = !showPassword.value
 }
 
-onMounted(() => {
-  generateCaptcha()
-})
+function normalizeFirebaseError(code, message) {
+  // Helpful messages for common local-dev cases
+  if (code === 'auth/network-request-failed') {
+    return 'Network error: Is the Auth Emulator running on port 9099? Check firewall/VPN and try again.'
+  }
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+    return 'Invalid email or password.'
+  }
+  if (code === 'auth/user-not-found') {
+    return 'User not found. Please register first.'
+  }
+  return message || 'Login failed.'
+}
 
 async function submit() {
-  // Validate captcha
-  const code = (captchaInput.value || '').trim()
-  if (!/^[0-9]{6}$/.test(code)) {
-    alert('Please enter a 6-digit code.')
-    return
-  }
-  if (code !== captcha.value) {
-    alert('Verification code is incorrect. A new code has been generated.')
-    generateCaptcha()
-    return
-  }
-
+  errorText.value = ''
   try {
-    await signInWithEmailAndPassword(auth, email.value.trim(), password.value)
+    loading.value = true
+    await signInWithEmailAndPassword(auth, (email.value || '').trim(), password.value)
 
-    // If you don't have /home, change this to your desired route
-    router.replace('/home')
+    // Redirect: prefer ?redirect=..., otherwise go to /EmailSend
+    var target = '/Home'
+    if (route && route.query && route.query.redirect) {
+      target = String(route.query.redirect)
+    }
+    router.replace(target)
   } catch (e) {
-    alert(e?.message || 'Login failed. Please check your email and password.')
-    generateCaptcha()
+    var code = e && e.code ? String(e.code) : ''
+    var msg = e && e.message ? String(e.message) : ''
+    errorText.value = normalizeFirebaseError(code, msg)
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -117,21 +112,5 @@ async function submit() {
   width: 100%;
   max-width: 400px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* Captcha block */
-.captcha {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.captcha__code {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  letter-spacing: 2px;
-  padding: 6px 10px;
-  border: 1px dashed #bbb;
-  border-radius: 6px;
-  background: #fafafa;
-  user-select: none;
 }
 </style>
