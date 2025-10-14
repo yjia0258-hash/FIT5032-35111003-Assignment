@@ -1,220 +1,211 @@
 <template>
-  <div class="datatable">
-    <!-- Top bar: global search -->
-    <div class="d-flex align-items-center justify-content-between mb-2 gap-2">
-      <input
-        v-model.trim="globalQuery"
-        type="search"
-        class="form-control form-control-sm"
-        placeholder="Search all columns..."
-        style="max-width: 320px"
-        aria-label="Global search"
-      />
-      <button class="btn btn-outline-secondary btn-sm" @click="clearAllFilters">Clear filters</button>
+  <div class="card dt-card">
+    <div v-if="title" class="card-header fw-semibold dt-card-header">
+      {{ title }}
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-sm table-bordered align-middle mb-2">
-        <thead>
-          <!-- Sort header -->
-          <tr class="table-light">
-            <th
-              v-for="col in columns"
-              :key="col.key"
-              :style="{ width: col.width || 'auto', cursor: col.sortable !== false ? 'pointer' : 'default' }"
-              @click="col.sortable !== false && setSort(col.key)"
-              scope="col"
-            >
-              <div class="d-flex align-items-center justify-content-between">
-                <span>{{ col.label }}</span>
-                <span v-if="sortKey === col.key" class="text-muted small">
-                  {{ sortDir === 'asc' ? '▲' : '▼' }}
-                </span>
-              </div>
-            </th>
-          </tr>
+    <div class="card-body dt-card-body">
+      <div class="table-responsive">
+        <table ref="tableRef" class="table table-striped table-bordered align-middle w-100">
+          <thead>
+            <!-- Header labels -->
+            <tr>
+              <th v-for="c in columns" :key="c.key">{{ c.label }}</th>
+            </tr>
+            <!-- Per-column search inputs -->
+            <tr class="column-filters">
+              <th v-for="c in columns" :key="c.key">
+                <input
+                  v-if="c.searchable !== false"
+                  type="search"
+                  class="form-control form-control-sm"
+                  :placeholder="`Search ${c.label}`"
+                />
+              </th>
+            </tr>
+          </thead>
 
-          <!-- Column filters (per-column search) -->
-          <tr>
-            <th v-for="col in columns" :key="col.key">
-              <input
-                v-if="col.searchable !== false"
-                v-model="columnFilters[col.key]"
-                type="search"
-                class="form-control form-control-sm"
-                :placeholder="`Search ${col.label}`"
-                @keydown.stop
-              />
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr v-for="row in paginatedRows" :key="row.__rid">
-            <td v-for="col in columns" :key="col.key">
-              {{ formatCell(row[col.key]) }}
-            </td>
-          </tr>
-
-          <tr v-if="paginatedRows.length === 0">
-            <td :colspan="columns.length" class="text-center text-muted py-4">
-              No data
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination (fixed 10 rows/page) -->
-    <div class="d-flex align-items-center justify-content-between">
-      <div class="small text-muted">
-        Showing {{ startIndex + 1 }}–{{ endIndex }} of {{ filteredRows.length }}
+          <!-- Body is managed by DataTables -->
+          <tbody></tbody>
+        </table>
       </div>
 
-      <nav>
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item" :class="{ disabled: page === 1 }">
-            <button class="page-link" @click="goPrev" :disabled="page === 1">Prev</button>
-          </li>
-
-          <li
-            v-for="p in pageCount"
-            :key="p"
-            class="page-item"
-            :class="{ active: page === p }"
-          >
-            <button class="page-link" @click="goPage(p)">{{ p }}</button>
-          </li>
-
-          <li class="page-item" :class="{ disabled: page === pageCount }">
-            <button class="page-link" @click="goNext" :disabled="page === pageCount">Next</button>
-          </li>
-        </ul>
-      </nav>
+      <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2">
+        <small class="text-muted">
+          * 10 rows/page · sorting · global & per-column search
+        </small>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+// Bootstrap 5 + DataTables wrapper
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import $ from 'jquery'
+import 'datatables.net'
+import 'datatables.net-bs5'
 
-/**
- * Props:
- * - columns: [{ key: 'name', label: 'Name', searchable?: true, sortable?: true, width?: '160px' }]
- * - rows:    [{ name: 'Alice', age: 20, ... }]
- */
 const props = defineProps({
+  title:   { type: String, default: '' },
+  // columns: [{ key:'field', label:'Label', searchable?:boolean, sortable?:boolean }]
   columns: { type: Array, required: true },
-  rows: { type: Array, required: true }
+  // rows: [{ field: value, ... }]
+  rows:    { type: Array, required: true }
 })
 
-/** Fixed page size = 10 (as per assignment requirement) */
-const PAGE_SIZE = 10
+const tableRef = ref(null)
+let dt = null
 
-/** Sort state */
-const sortKey = ref(null)
-const sortDir = ref('asc') // 'asc' | 'desc'
+onMounted(() => {
+  const $el = $(tableRef.value)
 
-/** Global search & per-column filters */
-const globalQuery = ref('')
-const columnFilters = reactive({})
+  // Strict column mapping by "key" (safer than reading inner HTML)
+  const dtColumns = (props.columns || []).map((c) => ({
+    data: c.key,
+    title: c.label,
+    orderable: c.sortable === false ? false : true
+  }))
 
-/** Pagination */
-const page = ref(1)
+  dt = $el.DataTable({
+    // Place filter top-right, info left & pager right at bottom
+    dom:
+      "<'row align-items-center gx-2 mb-2'<'col-sm-6'i><'col-sm-6 text-sm-end'f>>" +
+      'rt' +
+      "<'row align-items-center mt-2'<'col-sm-5'i><'col-sm-7 text-sm-end'p>>",
 
-/** Initialize column filters */
-props.columns.forEach(c => {
-  columnFilters[c.key] = ''
-})
-
-/** Internal: normalize rows with runtime id */
-const normalizedRows = computed(() => {
-  return (props.rows || []).map((r, idx) => ({ __rid: idx + '-' + (r.id ?? ''), ...r }))
-})
-
-/** Helpers */
-function setSort(key) {
-  if (sortKey.value === key) {
-    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortKey.value = key
-    sortDir.value = 'asc'
-  }
-  page.value = 1
-}
-
-function formatCell(val) {
-  if (val == null) return ''
-  return String(val)
-}
-
-function clearAllFilters() {
-  globalQuery.value = ''
-  Object.keys(columnFilters).forEach(k => (columnFilters[k] = ''))
-  page.value = 1
-}
-
-const filteredRows = computed(() => {
-  let data = normalizedRows.value
-
-  // global search (OR across all visible columns)
-  const q = globalQuery.value.trim().toLowerCase()
-  if (q) {
-    const keys = props.columns.map(c => c.key)
-    data = data.filter(row =>
-      keys.some(k => String(row[k] ?? '').toLowerCase().includes(q))
-    )
-  }
-
-  // per-column filters (AND across each filled filter)
-  for (const k of Object.keys(columnFilters)) {
-    const v = (columnFilters[k] || '').trim().toLowerCase()
-    if (v) {
-      data = data.filter(row => String(row[k] ?? '').toLowerCase().includes(v))
+    data: props.rows || [],
+    columns: dtColumns,
+    paging: true,
+    pageLength: 10,
+    lengthChange: false,
+    responsive: true,
+    searching: true,          // global search box
+    orderCellsTop: true,
+    autoWidth: false,
+    deferRender: true,
+    language: {
+      search: '',
+      searchPlaceholder: 'Global search…',
+      info: '_START_–_END_ of _TOTAL_',
+      infoEmpty: '0 results',
+      zeroRecords: 'No matching records',
+      paginate: { previous: '‹', next: '›' }
     }
-  }
-
-  return data
-})
-
-const sortedRows = computed(() => {
-  const key = sortKey.value
-  if (!key) return filteredRows.value
-
-  const dir = sortDir.value === 'asc' ? 1 : -1
-  const copy = filteredRows.value.slice()
-  copy.sort((a, b) => {
-    const va = a[key]; const vb = b[key]
-    if (va == null && vb == null) return 0
-    if (va == null) return -1 * dir
-    if (vb == null) return 1 * dir
-
-    const sa = String(va).toLowerCase()
-    const sb = String(vb).toLowerCase()
-    if (sa < sb) return -1 * dir
-    if (sa > sb) return 1 * dir
-    return 0
   })
-  return copy
+
+  // Bind per-column search (second header row)
+  dt.columns().every(function (colIdx) {
+    const $input = $(tableRef.value)
+      .find('thead tr.column-filters th')
+      .eq(colIdx)
+      .find('input')
+    if ($input.length) {
+      $input.on('keyup change', function () {
+        dt.column(colIdx).search(this.value).draw()
+      })
+    }
+  })
 })
 
-/** Pagination derived values */
-const pageCount = computed(() => Math.max(1, Math.ceil(sortedRows.value.length / PAGE_SIZE)))
-const startIndex = computed(() => (page.value - 1) * PAGE_SIZE)
-const endIndex = computed(() => Math.min(sortedRows.value.length, startIndex.value + PAGE_SIZE))
-const paginatedRows = computed(() => sortedRows.value.slice(startIndex.value, endIndex.value))
-
-/** Guard current page when filters/search change */
-watch([filteredRows, sortedRows], () => {
-  if (page.value > pageCount.value) page.value = pageCount.value
+onBeforeUnmount(() => {
+  if (dt) { dt.destroy(); dt = null }
 })
 
-function goPrev() { if (page.value > 1) page.value-- }
-function goNext() { if (page.value < pageCount.value) page.value++ }
-function goPage(p) { page.value = p }
+// When props.rows changes, refresh table data
+watch(
+  () => props.rows,
+  (newRows) => {
+    if (!dt) return
+    dt.clear()
+    dt.rows.add(newRows || [])
+    dt.draw(false)
+  },
+  { deep: true }
+)
 </script>
 
 <style scoped>
-.table { margin-bottom: .5rem; }
-.pagination .page-link { cursor: pointer; }
+/* Card look */
+.dt-card{
+  border: 1px solid #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.04);
+  background: #fff;
+}
+.dt-card-header{
+  background: linear-gradient(180deg,#fff 0%, #fff 100%);
+  border-bottom: 1px solid #eef0f4 !important;
+  padding: .75rem 1rem;
+  font-size: .95rem;
+}
+.dt-card-body{
+  padding: .9rem 1rem 1rem;
+}
+
+/* Table base */
+.table{ font-size: .94rem; }
+.table thead th{
+  background: #fff;
+  border-bottom: 1px solid #eef0f4;
+  white-space: nowrap;
+}
+.table tbody td{ border-top: 1px solid #f2f3f7; }
+.table tbody tr:hover{ background: #fafbff !important; }
+th, td{
+  padding: .5rem .6rem !important;
+  vertical-align: middle !important;
+}
+
+/* Column filters row */
+.column-filters th{
+  padding: .25rem .5rem !important;
+  background: #fbfcfe;
+  border-bottom: 1px solid #eef0f4;
+}
+.column-filters input{
+  min-width: 120px;
+  border-radius: 8px;
+  height: 30px;
+  font-size: .85rem;
+}
+
+/* DataTables controls */
+:deep(.dataTables_wrapper .dataTables_filter){ margin: 0; }
+:deep(.dataTables_wrapper .dataTables_filter label){ width: 100%; }
+:deep(.dataTables_wrapper .dataTables_filter input){
+  width: 100%;
+  max-width: 260px;
+  margin-left: 0 !important;
+  border-radius: 10px;
+  height: 32px;
+  padding: .25rem .5rem .25rem 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 24 24' stroke='%2399A3AE' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: .5rem center;
+  background-size: 14px;
+}
+:deep(.dataTables_wrapper .dataTables_info){
+  padding-top: .25rem !important;
+  color: #6b7280;
+}
+:deep(.dataTables_wrapper .dataTables_paginate){ padding-top: .25rem !important; }
+:deep(.dataTables_wrapper .paginate_button){
+  border-radius: 8px !important;
+  padding: .25rem .5rem !important;
+  margin: 0 .125rem !important;
+  border: 1px solid #e5e7eb !important;
+  background: #fff !important;
+  color: #0d6efd !important;
+}
+:deep(.dataTables_wrapper .paginate_button.current){
+  background: #0d6efd !important;
+  color: #fff !important;
+  border-color: #0d6efd !important;
+}
+
+/* Mobile */
+@media (max-width: 576px){
+  .column-filters input{ min-width: 100px; }
+}
 </style>

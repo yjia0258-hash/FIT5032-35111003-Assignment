@@ -7,16 +7,6 @@
         <p v-if="user" class="user-line">
           Logged in as:
           <strong>{{ user.email }}</strong>
-          <span
-            v-if="user.emailVerified"
-            class="badge verified"
-            title="Email verified"
-          >Verified</span>
-          <span
-            v-else
-            class="badge unverified"
-            title="Email not verified"
-          >Unverified</span>
         </p>
       </header>
 
@@ -172,7 +162,7 @@ async function logout() {
 }
 .btn-outline-secondary:hover,
 .btn-outline-secondary:focus {
-  border-color: #9ca3af;    /* gray-400 */
+  border-color: #f9fafb;    /* gray-400 */
   background: #f9fafb;      /* gray-50 */
 }
 

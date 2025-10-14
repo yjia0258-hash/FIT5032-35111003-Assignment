@@ -74,7 +74,10 @@ onMounted(() => {
     signedIn.value = !!u
   })
 })
-onBeforeUnmount(() => { unsub && unsub() })
+
+onBeforeUnmount(() => {
+  if (unsub) unsub()
+})
 
 async function logout() {
   try {
@@ -87,12 +90,11 @@ async function logout() {
 
 <style scoped>
 .app-header {
-  position: sticky;   /* keep header visible on scroll */
+  position: sticky; 
   top: 0;
   z-index: 1030;
 }
 
-/* Make pills a bit tighter / cleaner */
 .nav-link {
   padding: 6px 10px;
 }

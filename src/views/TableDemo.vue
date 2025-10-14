@@ -1,77 +1,124 @@
 <template>
-  <main class="container py-3">
-    <h2 class="mb-3">Interactive Tables Demo</h2>
+  <main class="container py-3" style="max-width:880px">
+    <h2 class="mb-3">Interactive Tables — Places & Bookings</h2>
 
-    <!-- Table 1: Cities -->
-    <section class="mb-4">
-      <h5 class="mb-2">Table A — Cities</h5>
-      <DataTable :columns="cityCols" :rows="cityRows" />
+    <!-- Table A: Places -->
+    <section class="table-section">
+      <DataTable
+        :title="`Table A — Places (${places.length})`"
+        :columns="placeCols"
+        :rows="places"
+      />
     </section>
 
-    <!-- Table 2: Courses -->
-    <section>
-      <h5 class="mb-2">Table B — Courses</h5>
-      <DataTable :columns="courseCols" :rows="courseRows" />
+    <!-- Table B: Bookings -->
+    <section class="table-section">
+      <DataTable
+        :title="`Table B — Bookings (${bookings.length})`"
+        :columns="bookingCols"
+        :rows="bookings"
+      />
     </section>
+
+    <p v-if="err" class="text-danger small mt-2 mb-0">{{ err }}</p>
   </main>
 </template>
 
 <script setup>
+// DataTables-powered generic table
 import DataTable from '@/components/DataTable.vue'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
-const cityCols = [
-  { key: 'name', label: 'City' },
-  { key: 'country', label: 'Country' },
-  { key: 'population', label: 'Population' },
-  { key: 'airport', label: 'Airport' }
+/**
+ * Columns MUST match your JSON keys exactly.
+ * places.json has: place_id, name, category, city, address, ratings, open_now
+ * bookings.json has: booking_id, customer_name, place_name, date, time, party_size, status
+ */
+const placeCols = [
+  { key: 'place_id',  label: 'ID' },
+  { key: 'name',      label: 'Name' },
+  { key: 'category',  label: 'Category' },
+  { key: 'city',      label: 'City' },
+  { key: 'address',   label: 'Address' },
+  { key: 'ratings',   label: 'Rating' },   // IMPORTANT: your JSON is "ratings"
+  { key: 'open_now',  label: 'Open?' }
 ]
 
-const cityRows = ref([
-  { name: 'Melbourne', country: 'Australia', population: 5078000, airport: 'MEL' },
-  { name: 'Sydney', country: 'Australia', population: 5312000, airport: 'SYD' },
-  { name: 'Brisbane', country: 'Australia', population: 2564000, airport: 'BNE' },
-  { name: 'Perth', country: 'Australia', population: 2141000, airport: 'PER' },
-  { name: 'Adelaide', country: 'Australia', population: 1373000, airport: 'ADL' },
-  { name: 'Hobart', country: 'Australia', population: 253000, airport: 'HBA' },
-  { name: 'Canberra', country: 'Australia', population: 472000, airport: 'CBR' },
-  { name: 'Auckland', country: 'New Zealand', population: 1697000, airport: 'AKL' },
-  { name: 'Wellington', country: 'New Zealand', population: 215000, airport: 'WLG' },
-  { name: 'Christchurch', country: 'New Zealand', population: 381000, airport: 'CHC' },
-  { name: 'Tokyo', country: 'Japan', population: 13960000, airport: 'HND' },
-  { name: 'Osaka', country: 'Japan', population: 2700000, airport: 'KIX' },
-  { name: 'Kyoto', country: 'Japan', population: 1475000, airport: 'UKY' },
-  { name: 'Seoul', country: 'South Korea', population: 9776000, airport: 'ICN' },
-  { name: 'Busan', country: 'South Korea', population: 3360000, airport: 'PUS' },
-  { name: 'Shanghai', country: 'China', population: 24870000, airport: 'PVG' },
-  { name: 'Beijing', country: 'China', population: 21890000, airport: 'PEK' },
-  { name: 'Shenzhen', country: 'China', population: 17560000, airport: 'SZX' },
-  { name: 'Guangzhou', country: 'China', population: 18740000, airport: 'CAN' },
-  { name: 'Hangzhou', country: 'China', population: 11900000, airport: 'HGH' },
-])
-
-const courseCols = [
-  { key: 'code', label: 'Code' },
-  { key: 'title', label: 'Title' },
-  { key: 'campus', label: 'Campus' },
-  { key: 'credits', label: 'Credits' }
+const bookingCols = [
+  { key: 'booking_id',    label: 'Booking ID' },
+  { key: 'customer_name', label: 'Customer' },
+  { key: 'place_name',    label: 'Place' },
+  { key: 'date',          label: 'Date' },
+  { key: 'time',          label: 'Time' },
+  { key: 'party_size',    label: 'Party' },
+  { key: 'status',        label: 'Status' }
 ]
 
-const courseRows = ref([
-  { code: 'FIT5137', title: 'Advanced Web Dev', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5032', title: 'Mobile & Web Apps', campus: 'Clayton', credits: 6 },
-  { code: 'FIT9131', title: 'Programming Foundations', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5145', title: 'Data Exploration', campus: 'Caulfield', credits: 6 },
-  { code: 'FIT5120', title: 'Enterprise Project', campus: 'Caulfield', credits: 12 },
-  { code: 'FIT9136', title: 'Algorithms & Structures', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5046', title: 'Distributed Computing', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5152', title: 'Data Wrangling', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5165', title: 'Cloud Computing', campus: 'Caulfield', credits: 6 },
-  { code: 'FIT5193', title: 'Web Services', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5101', title: 'Software Engineering', campus: 'Caulfield', credits: 6 },
-  { code: 'FIT5202', title: 'Machine Learning', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5148', title: 'Big Data Processing', campus: 'Clayton', credits: 6 },
-  { code: 'FIT5097', title: 'User Experience', campus: 'Caulfield', credits: 6 },
-  { code: 'FIT5099', title: 'Cyber Security', campus: 'Clayton', credits: 6 },
-])
+// Table data
+const places   = ref([])
+const bookings = ref([])
+const err      = ref('')
+
+// Helper: clean weird "Syntax error in formula ..." addresses from your Mockaroo output
+function cleanAddress(a, city) {
+  const s = String(a ?? '')
+  if (s.startsWith('Syntax error in formula')) {
+    return `${city} City Center`
+  }
+  return s
+}
+
+// Helper: normalize status (null/empty -> 'unknown')
+function normStatus(s) {
+  const v = (s ?? '').toString().trim()
+  return v ? v : 'unknown'
+}
+
+onMounted(async () => {
+  try {
+    const [p, b] = await Promise.all([
+      fetch('/mock/places.json').then(r => r.json()),
+      fetch('/mock/booking.json').then(r => r.json())
+    ])
+
+    // Sanitize Places: fix address, keep other fields
+    places.value = Array.isArray(p)
+      ? p.map(row => ({
+          ...row,
+          address: cleanAddress(row.address, row.city)
+        }))
+      : []
+
+    // Normalize Bookings: status -> 'unknown' if null/empty
+    bookings.value = Array.isArray(b)
+      ? b.map(row => ({
+          ...row,
+          status: normStatus(row.status)
+        }))
+      : []
+
+    // Debug (optional)
+    // console.log('places length:', places.value.length)
+    // console.log('bookings length:', bookings.value.length)
+
+    if (!places.value.length || !bookings.value.length) {
+      err.value = 'Loaded mock JSON but arrays are empty. Check files under /public/mock/.'
+    }
+  } catch (e) {
+    err.value = 'Failed to load /mock/places.json or /mock/bookings.json.'
+  }
+})
 </script>
+
+<style scoped>
+/* Stable spacing between two cards */
+.table-section {
+  margin-bottom: 28px;
+}
+
+/* Optional: let main breathe a bit with wider layout */
+h2.mb-3 {
+  line-height: 1.25;
+  letter-spacing: .2px;
+}
+</style>
