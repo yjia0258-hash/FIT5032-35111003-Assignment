@@ -34,7 +34,7 @@ const routes = [
   { path: '/home',      name: 'home',      component: Home,      meta: { requiresAuth: true, title: 'Home' } },
   { path: '/EmailSend', name: 'EmailSend', component: EmailSend, meta: { requiresAuth: true, title: 'Send Email' } },
   { path: '/tables',    name: 'tables',    component: TableDemo, meta: { requiresAuth: true, title: 'Tables' } },
-  
+
   // Admin-only
   { path: '/admin',     name: 'admin',     component: Admin,     meta: { requiresAuth: true, roles: ['admin'], title: 'Admin' } },
 
@@ -46,9 +46,7 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior () {
-    return { left: 0, top: 0 }
-  }
+  scrollBehavior () { return { left: 0, top: 0 } }
 })
 
 router.beforeEach(async (to) => {
@@ -63,7 +61,7 @@ router.beforeEach(async (to) => {
   }
 
   // Protect routes that require auth
-  if (requiresAuth && !user) {
+  if (requiresAuth && !user) {  
     return { name: 'FireLogin', query: { redirect: to.fullPath } }
   }
 

@@ -106,7 +106,6 @@ async function onLogout() {
 }
 .me{ font-size: 14px; color: #555; }
 
-
 .page{
   flex: 1;
 }
@@ -116,7 +115,7 @@ async function onLogout() {
   margin: 0 auto;
 }
 
-
+/* Buttons */
 .btn{
   border: 1px solid transparent;
   padding: 6px 12px;
@@ -150,7 +149,7 @@ async function onLogout() {
   color: #fff;
 }
 
-
+/* Active route highlight */
 :deep(a.router-link-exact-active.btn.ghost){
   border-color: #0d6efd;
   color: #0d6efd;

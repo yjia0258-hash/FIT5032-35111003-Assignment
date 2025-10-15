@@ -89,13 +89,6 @@ async function logout() {
 </script>
 
 <style scoped>
-.app-header {
-  position: sticky; 
-  top: 0;
-  z-index: 1030;
-}
-
-.nav-link {
-  padding: 6px 10px;
-}
+.app-header { position: sticky; top: 0; z-index: 1030; }
+.nav-link   { padding: 6px 10px; }
 </style>

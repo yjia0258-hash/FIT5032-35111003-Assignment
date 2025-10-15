@@ -162,7 +162,11 @@ import DOMPurify from 'dompurify'
 
 // Firebase Auth
 import { auth } from '@/lib/firebase'
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signOut 
+} from 'firebase/auth'
 
 const router = useRouter()
 
@@ -191,7 +195,6 @@ const touched = ref({
   phone: false
 })
 
-/* ---------- Validation ---------- */
 const checkName = () => {
   const v = model.value.username?.trim() || ''
   if (!v) errs.value.username = 'Username is required.'
@@ -260,10 +263,14 @@ const onSubmit = async () => {
       ALLOWED_ATTR: []
     })
 
-    // Firebase registration
-    const cred = await createUserWithEmailAndPassword(auth, model.value.email.trim(), model.value.password)
+    // Firebase registration (this signs the user in)
+    const cred = await createUserWithEmailAndPassword(
+      auth,
+      model.value.email.trim(),
+      model.value.password
+    )
 
-    // Send email verification
+    // Send email verification (optional)
     try {
       await sendEmailVerification(cred.user)
       alert('Verification email sent! Please check your inbox.')
@@ -271,7 +278,8 @@ const onSubmit = async () => {
       console.warn('Email verification error:', err)
     }
 
-    // TODO: save additional fields (username, role, gender, phone, reason) to Firestore if needed
+  
+    try { await signOut(auth) } catch (e) { console.warn('signOut after register failed:', e) }
 
     // Redirect to login
     router.replace('/FireLogin')

@@ -59,7 +59,10 @@ onMounted(() => {
     }
   })
 })
-onBeforeUnmount(() => { if (stop) stop() })
+
+onBeforeUnmount(() => {
+  if (stop) stop()
+})
 
 function goSendEmail() {
   router.push('/EmailSend')
@@ -111,17 +114,6 @@ async function logout() {
 }
 .user-line { margin: 0 0 4px; color: #374151; font-size: 0.95rem; }
 
-.badge {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  vertical-align: middle;
-}
-.badge.verified   { background: #e0f2fe; color: #0369a1; }  /* blue-100/700 */
-.badge.unverified { background: #fee2e2; color: #b91c1c; }  /* red-100/700 */
-
 /* Content card area */
 .home-card {
   border: 1px solid #e5e7eb;
@@ -162,7 +154,7 @@ async function logout() {
 }
 .btn-outline-secondary:hover,
 .btn-outline-secondary:focus {
-  border-color: #f9fafb;    /* gray-400 */
+  border-color: #9ca3af;    /* gray-400 */
   background: #f9fafb;      /* gray-50 */
 }
 
