@@ -12,7 +12,7 @@
 
       <div class="home-card">
         <p class="mb-3">
-          Use the buttons below to send an email (with optional attachment) or view interactive tables.
+          If you encounter any problems, please contact the administrator.
         </p>
 
         <div class="actions">
@@ -20,15 +20,24 @@
           <button type="button" class="btn btn-primary" @click="goSendEmail">
             Send Email
           </button>
+        </div>
 
+        <p class="mb-3">
+          You can find locations and make reservations.
+        </p>
+        <div class="actions">
           <!-- D.3: Tables page -->
           <button type="button" class="btn btn-outline-secondary" @click="goTables">
             View Tables
           </button>
+        </div>
 
-          <!-- Logout -->
-          <button type="button" class="btn btn-outline-secondary" @click="logout">
-            Logout
+        <p class="mb-3">
+          Map function
+        </p>
+        <div class="actions">
+          <button type="button" class="btn btn-outline-secondary" @click="goMap">
+            Open Map
           </button>
         </div>
 
@@ -72,6 +81,10 @@ function goTables() {
   router.push('/tables')
 }
 
+function goMap() {
+  router.push('/map')
+}
+
 async function logout() {
   errorMsg.value = ''
   try {
@@ -108,6 +121,7 @@ async function logout() {
 /* Header */
 .home-head h1 {
   margin: 0 0 8px;
+  text-align: center; 
   font-size: 1.75rem;
   font-weight: 700;
   color: #111827;

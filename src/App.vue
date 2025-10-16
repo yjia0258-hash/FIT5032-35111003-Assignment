@@ -39,7 +39,7 @@ async function onLogout() {
 
 <template>
   <div class="app">
-    <!-- Top navigation (hidden on login/register) -->
+    <!-- Top navigation  -->
     <header v-if="showNav" class="topbar">
       <div class="topbar__inner">
         <nav class="nav-left">

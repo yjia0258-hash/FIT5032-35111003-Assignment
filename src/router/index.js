@@ -1,18 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Views (lazy-loaded)
-const Admin               = () => import('@/views/Admin.vue')
-const Home                = () => import('@/views/Home.vue')
-const FirebaseSigninView  = () => import('@/views/FirebaseSigninView.vue')
-const FirebaseRegisterView= () => import('@/views/FirebaseRegisterView.vue')
-const EmailSend           = () => import('@/views/EmailSend.vue')
-const TableDemo           = () => import('@/views/TableDemo.vue')
+const Admin                = () => import('@/views/Admin.vue')
+const Home                 = () => import('@/views/Home.vue')
+const FirebaseSigninView   = () => import('@/views/FirebaseSigninView.vue')
+const FirebaseRegisterView = () => import('@/views/FirebaseRegisterView.vue')
+const EmailSend            = () => import('@/views/EmailSend.vue')
+const TableDemo            = () => import('@/views/TableDemo.vue')
+const MapView              = () => import('@/views/MapView.vue')
 
 // Firebase
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 
-// Subscribe once to auth state and resolve current user
+// Resolve current user once (used by route guards)
 function getCurrentUser () {
   return new Promise((resolve) => {
     const stop = onAuthStateChanged(auth, (user) => {
@@ -26,20 +27,21 @@ function getCurrentUser () {
 const ADMIN_EMAILS = new Set(['admin@yourdomain.com'])
 
 const routes = [
-  // Auth pages (hide when already signed in)
+  // Auth pages
   { path: '/FireLogin',    name: 'FireLogin',    component: FirebaseSigninView,   meta: { guestOnly: true,  title: 'Login' } },
   { path: '/FireRegister', name: 'FireRegister', component: FirebaseRegisterView, meta: { guestOnly: true,  title: 'Register' } },
 
-  // App pages (require auth)
+  // App pages
   { path: '/home',      name: 'home',      component: Home,      meta: { requiresAuth: true, title: 'Home' } },
   { path: '/EmailSend', name: 'EmailSend', component: EmailSend, meta: { requiresAuth: true, title: 'Send Email' } },
   { path: '/tables',    name: 'tables',    component: TableDemo, meta: { requiresAuth: true, title: 'Tables' } },
+  { path: '/map',       name: 'map',       component: MapView,   meta: { requiresAuth: true, title: 'Map' } },
 
   // Admin-only
   { path: '/admin',     name: 'admin',     component: Admin,     meta: { requiresAuth: true, roles: ['admin'], title: 'Admin' } },
 
   // Default & fallback
-  { path: '/', redirect: '/FireLogin' },
+  { path: '/', name: 'root', redirect: '/FireLogin' },
   { path: '/:pathMatch(.*)*', redirect: '/FireLogin' }
 ]
 
@@ -52,20 +54,27 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const requiresAuth = to.matched.some(r => r.meta && r.meta.requiresAuth)
   const guestOnly    = to.matched.some(r => r.meta && r.meta.guestOnly)
-  const user         = await getCurrentUser()
 
-  // If already signed in, block guest-only pages (login/register)
+  // If navigating to root '/', decide based on auth state
+  if (to.name === 'root') {
+    const u = await getCurrentUser()
+    return u ? { name: 'home' } : { name: 'FireLogin' }
+  }
+
+  const user = await getCurrentUser()
+
+  // If already signed in, block guest-only pages (login/register) -> go home
   if (guestOnly && user) {
     const back = (to.query && to.query.redirect) ? String(to.query.redirect) : '/home'
     return back
   }
 
   // Protect routes that require auth
-  if (requiresAuth && !user) {  
+  if (requiresAuth && !user) {
     return { name: 'FireLogin', query: { redirect: to.fullPath } }
   }
 
-  // Admin whitelist demo (swap to custom claims in real apps)
+  // Admin whitelist demo (replace with custom claims in real apps)
   if (to.meta && Array.isArray(to.meta.roles) && to.meta.roles.length && user) {
     if (to.meta.roles.includes('admin')) {
       const email = user.email || ''
