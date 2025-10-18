@@ -1,9 +1,46 @@
 <template>
   <main class="container py-3" style="max-width:880px">
-    <h2 class="mb-3">Interactive Tables — Places & Bookings</h2>
+    <!-- Title + Go to Charts -->
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <h2 class="m-0">Interactive Tables — Places & Bookings</h2>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        @click="goCharts"
+        aria-label="Open interactive charts page"
+        title="Open Charts"
+      >
+        View Charts
+      </button>
+    </header>
 
     <!-- Table A: Places -->
     <section class="table-section">
+ 
+      <div class="d-flex align-items-center justify-content-between mb-2 section-head">
+        <h3 class="h5 m-0">Table A — Places ({{ places.length }})</h3>
+        <div class="btn-group" role="group" aria-label="Places export actions">
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            @click="exportCSV('places')"
+            :disabled="!places.length"
+            aria-label="Export Places table as CSV"
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            @click="exportPDF('places')"
+            :disabled="!places.length"
+            aria-label="Export Places table as PDF"
+          >
+            Export PDF
+          </button>
+        </div>
+      </div>
+
       <DataTable
         :title="`Table A — Places (${places.length})`"
         :columns="placeCols"
@@ -13,6 +50,31 @@
 
     <!-- Table B: Bookings -->
     <section class="table-section">
+      <!-- Export toolbar (accessible) -->
+      <div class="d-flex align-items-center justify-content-between mb-2 section-head">
+        <h3 class="h5 m-0">Table B — Bookings ({{ bookings.length }})</h3>
+        <div class="btn-group" role="group" aria-label="Bookings export actions">
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            @click="exportCSV('bookings')"
+            :disabled="!bookings.length"
+            aria-label="Export Bookings table as CSV"
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            @click="exportPDF('bookings')"
+            :disabled="!bookings.length"
+            aria-label="Export Bookings table as PDF"
+          >
+            Export PDF
+          </button>
+        </div>
+      </div>
+
       <DataTable
         :title="`Table B — Bookings (${bookings.length})`"
         :columns="bookingCols"
@@ -28,12 +90,15 @@
 // DataTables-powered generic table
 import DataTable from '@/components/DataTable.vue'
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'              
+// PDF libraries
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
-/**
- * Columns MUST match your JSON keys exactly.
- * places.json has: place_id, name, category, city, address, ratings, open_now
- * bookings.json has: booking_id, customer_name, place_name, date, time, party_size, status
- */
+const router = useRouter()                          
+const goCharts = () => router.push('/charts')        
+
+
 const placeCols = [
   { key: 'place_id',  label: 'ID' },
   { key: 'name',      label: 'Name' },
@@ -59,7 +124,7 @@ const places   = ref([])
 const bookings = ref([])
 const err      = ref('')
 
-// Helper: clean weird "Syntax error in formula ..." addresses from your Mockaroo output
+
 function cleanAddress(a, city) {
   const s = String(a ?? '')
   if (s.startsWith('Syntax error in formula')) {
@@ -68,7 +133,7 @@ function cleanAddress(a, city) {
   return s
 }
 
-// Helper: normalize status (null/empty -> 'unknown')
+// Helper: normalize status
 function normStatus(s) {
   const v = (s ?? '').toString().trim()
   return v ? v : 'unknown'
@@ -89,17 +154,13 @@ onMounted(async () => {
         }))
       : []
 
-    // Normalize Bookings: status -> 'unknown' if null/empty
+    // Normalize Bookings: status 
     bookings.value = Array.isArray(b)
       ? b.map(row => ({
           ...row,
           status: normStatus(row.status)
         }))
       : []
-
-    // Debug (optional)
-    // console.log('places length:', places.value.length)
-    // console.log('bookings length:', bookings.value.length)
 
     if (!places.value.length || !bookings.value.length) {
       err.value = 'Loaded mock JSON but arrays are empty. Check files under /public/mock/.'
@@ -108,17 +169,109 @@ onMounted(async () => {
     err.value = 'Failed to load /mock/places.json or /mock/bookings.json.'
   }
 })
+
+
+function exportCSV(which) {
+  const { cols, rows } = pickData(which)
+  if (!rows.length) return
+
+  const header = cols.map(c => c.label)
+  const body = rows.map(r => cols.map(c => toCell(r[c.key])))
+
+  const csv = [header, ...body]
+    .map(line => line.map(csvCellEscape).join(','))
+    .join('\r\n')
+
+  // BOM for Excel UTF-8
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  downloadBlob(blob, `${which}_export_${stamp()}.csv`)
+}
+
+/** Export PDF for the chosen dataset */
+function exportPDF(which) {
+  const { cols, rows } = pickData(which)
+  if (!rows.length) return
+
+  const head = [cols.map(c => c.label)]
+  const body = rows.map(r => cols.map(c => toCell(r[c.key])))
+
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
+
+  // Title
+  doc.setFontSize(14)
+  doc.text(`${prettyName(which)} — ${new Date().toLocaleString()}`, 40, 40)
+
+  autoTable(doc, {
+    head,
+    body,
+    startY: 60,
+    styles: { fontSize: 10, cellPadding: 6, halign: 'left', valign: 'middle' },
+    headStyles: { fillColor: [37, 99, 235] }, // subtle blue header
+    didDrawPage: () => {
+      const pageSize = doc.internal.pageSize
+      const pageWidth = pageSize.getWidth()
+      const pageNumber = doc.internal.getNumberOfPages()
+      doc.setFontSize(9)
+      doc.text(`Page ${pageNumber}`, pageWidth - 60, pageSize.getHeight() - 20)
+    }
+  })
+
+  doc.save(`${which}_export_${stamp()}.pdf`)
+}
+
+/* ----- shared helpers for export ----- */
+
+function pickData(which) {
+  if (which === 'places')  return { cols: placeCols,   rows: places.value }
+  if (which === 'bookings') return { cols: bookingCols, rows: bookings.value }
+  return { cols: [], rows: [] }
+}
+
+function toCell(v) {
+  if (v == null) return ''
+  if (typeof v === 'boolean') return v ? 'Yes' : 'No'
+  return String(v)
+}
+
+function csvCellEscape(val) {
+  // Escape commas, quotes, and line breaks (RFC 4180)
+  const needsQuotes = /[",\r\n]/.test(val)
+  const out = val.replace(/"/g, '""')
+  return needsQuotes ? `"${out}"` : out
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function stamp() {
+  const pad = (n) => String(n).padStart(2, '0')
+  const d = new Date()
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`
+}
+
+function prettyName(which) {
+  return which === 'places' ? 'Places Export' : 'Bookings Export'
+}
 </script>
 
 <style scoped>
 /* Stable spacing between two cards */
-.table-section {
-  margin-bottom: 28px;
-}
+.table-section { margin-bottom: 28px; }
 
 /* Optional: let main breathe a bit with wider layout */
-h2.mb-3 {
-  line-height: 1.25;
-  letter-spacing: .2px;
+h2.mb-3 { line-height: 1.25; letter-spacing: .2px; }
+
+/* Align toolbar + title nicely on narrow widths */
+.section-head { row-gap: .5rem; }
+@media (max-width: 480px) {
+  .section-head { flex-direction: column; align-items: flex-start !important; }
 }
 </style>

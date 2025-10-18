@@ -8,6 +8,7 @@ const FirebaseRegisterView = () => import('@/views/FirebaseRegisterView.vue')
 const EmailSend            = () => import('@/views/EmailSend.vue')
 const TableDemo            = () => import('@/views/TableDemo.vue')
 const MapView              = () => import('@/views/MapView.vue')
+const ChartsView = () => import('@/views/ChartsView.vue')
 
 // Firebase
 import { auth } from '@/lib/firebase'
@@ -36,6 +37,8 @@ const routes = [
   { path: '/EmailSend', name: 'EmailSend', component: EmailSend, meta: { requiresAuth: true, title: 'Send Email' } },
   { path: '/tables',    name: 'tables',    component: TableDemo, meta: { requiresAuth: true, title: 'Tables' } },
   { path: '/map',       name: 'map',       component: MapView,   meta: { requiresAuth: true, title: 'Map' } },
+  { path: '/charts', name: 'charts', component: ChartsView, meta: { requiresAuth: true, title: 'Charts' } },
+  
 
   // Admin-only
   { path: '/admin',     name: 'admin',     component: Admin,     meta: { requiresAuth: true, roles: ['admin'], title: 'Admin' } },
