@@ -87,11 +87,11 @@
 </template>
 
 <script setup>
-// DataTables-powered generic table
+
 import DataTable from '@/components/DataTable.vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'              
-// PDF libraries
+
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -105,7 +105,7 @@ const placeCols = [
   { key: 'category',  label: 'Category' },
   { key: 'city',      label: 'City' },
   { key: 'address',   label: 'Address' },
-  { key: 'ratings',   label: 'Rating' },   // IMPORTANT: your JSON is "ratings"
+  { key: 'ratings',   label: 'Rating' }, 
   { key: 'open_now',  label: 'Open?' }
 ]
 
@@ -119,7 +119,7 @@ const bookingCols = [
   { key: 'status',        label: 'Status' }
 ]
 
-// Table data
+
 const places   = ref([])
 const bookings = ref([])
 const err      = ref('')
@@ -133,7 +133,7 @@ function cleanAddress(a, city) {
   return s
 }
 
-// Helper: normalize status
+
 function normStatus(s) {
   const v = (s ?? '').toString().trim()
   return v ? v : 'unknown'
@@ -146,7 +146,7 @@ onMounted(async () => {
       fetch('/mock/booking.json').then(r => r.json())
     ])
 
-    // Sanitize Places: fix address, keep other fields
+
     places.value = Array.isArray(p)
       ? p.map(row => ({
           ...row,
@@ -154,7 +154,7 @@ onMounted(async () => {
         }))
       : []
 
-    // Normalize Bookings: status 
+
     bookings.value = Array.isArray(b)
       ? b.map(row => ({
           ...row,
@@ -182,12 +182,12 @@ function exportCSV(which) {
     .map(line => line.map(csvCellEscape).join(','))
     .join('\r\n')
 
-  // BOM for Excel UTF-8
+
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
   downloadBlob(blob, `${which}_export_${stamp()}.csv`)
 }
 
-/** Export PDF for the chosen dataset */
+
 function exportPDF(which) {
   const { cols, rows } = pickData(which)
   if (!rows.length) return
@@ -197,7 +197,7 @@ function exportPDF(which) {
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
 
-  // Title
+
   doc.setFontSize(14)
   doc.text(`${prettyName(which)} — ${new Date().toLocaleString()}`, 40, 40)
 
@@ -206,7 +206,7 @@ function exportPDF(which) {
     body,
     startY: 60,
     styles: { fontSize: 10, cellPadding: 6, halign: 'left', valign: 'middle' },
-    headStyles: { fillColor: [37, 99, 235] }, // subtle blue header
+    headStyles: { fillColor: [37, 99, 235] }, 
     didDrawPage: () => {
       const pageSize = doc.internal.pageSize
       const pageWidth = pageSize.getWidth()
@@ -219,7 +219,7 @@ function exportPDF(which) {
   doc.save(`${which}_export_${stamp()}.pdf`)
 }
 
-/* ----- shared helpers for export ----- */
+
 
 function pickData(which) {
   if (which === 'places')  return { cols: placeCols,   rows: places.value }
@@ -234,7 +234,7 @@ function toCell(v) {
 }
 
 function csvCellEscape(val) {
-  // Escape commas, quotes, and line breaks (RFC 4180)
+
   const needsQuotes = /[",\r\n]/.test(val)
   const out = val.replace(/"/g, '""')
   return needsQuotes ? `"${out}"` : out
@@ -263,13 +263,13 @@ function prettyName(which) {
 </script>
 
 <style scoped>
-/* Stable spacing between two cards */
+
 .table-section { margin-bottom: 28px; }
 
-/* Optional: let main breathe a bit with wider layout */
+
 h2.mb-3 { line-height: 1.25; letter-spacing: .2px; }
 
-/* Align toolbar + title nicely on narrow widths */
+
 .section-head { row-gap: .5rem; }
 @media (max-width: 480px) {
   .section-head { flex-direction: column; align-items: flex-start !important; }

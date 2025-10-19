@@ -97,28 +97,28 @@ async function logout() {
 </script>
 
 <style scoped>
-/* Page canvas: center the main section, give breathing room */
+
 .home-page {
-  min-height: 85vh;            /* elongated area */
+  min-height: 85vh;       
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: #f8fafc;         /* subtle page bg */
+  background: #f8fafc;        
 }
 
-/* Main shell: clean card-like container */
+
 .home-shell {
   width: 100%;
-  max-width: 920px;             /* roomy */
+  max-width: 920px;        
   background: #fff;
-  border: 1px solid #e5e7eb;    /* light gray */
+  border: 1px solid #e5e7eb;  
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-/* Header */
+
 .home-head h1 {
   margin: 0 0 8px;
   text-align: center; 
@@ -128,7 +128,7 @@ async function logout() {
 }
 .user-line { margin: 0 0 4px; color: #374151; font-size: 0.95rem; }
 
-/* Content card area */
+
 .home-card {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -138,44 +138,43 @@ async function logout() {
 }
 .home-card p { margin: 0 0 8px; color: #374151; font-size: 0.95rem; }
 
-/* Actions row */
+
 .actions {
   display: flex;
   align-items: center;
-  gap: 10px;          /* spacing between buttons */
+  gap: 10px;          
   margin-top: 4px;
 }
 
-/* Buttons: small polish on top of Bootstrap */
 .btn {
   font-weight: 600;
   border-radius: 8px;
   padding: 8px 14px;
 }
 .btn-primary {
-  background: #3b82f6;      /* blue-500 */
+  background: #3b82f6;      
   border-color: #3b82f6;
 }
 .btn-primary:hover,
 .btn-primary:focus {
-  background: #2563eb;      /* blue-600 */
+  background: #2563eb;      
   border-color: #2563eb;
 }
 .btn-outline-secondary {
-  border-color: #d1d5db;    /* gray-300 */
-  color: #374151;           /* gray-700 */
+  border-color: #d1d5db;   
+  color: #374151;          
   background: #fff;
 }
 .btn-outline-secondary:hover,
 .btn-outline-secondary:focus {
-  border-color: #9ca3af;    /* gray-400 */
-  background: #f9fafb;      /* gray-50 */
+  border-color: #9ca3af;   
+  background: #f9fafb;     
 }
 
-/* Error text */
+
 .err { color: #b91c1c; margin-top: 10px; }
 
-/* Responsive tweaks */
+
 @media (max-width: 576px) {
   .home-shell {
     padding: 18px;

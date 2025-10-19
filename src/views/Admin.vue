@@ -1,6 +1,5 @@
 <script setup>
-// Admin dashboard (ratings removed). Add your admin logic here if needed.
-// You can import and define other admin-related data/functions here later.
+
 </script>
 
 <template>
@@ -8,7 +7,7 @@
     <div class="page admin-page">
       <h2 class="title">Admin Panel</h2>
 
-      <!-- Panel: Overview (placeholder after removing ratings) -->
+  
       <section class="panel">
         <div class="panel__hd">
           <h3>Overview</h3>
@@ -17,8 +16,6 @@
           No metrics available. (Ratings feature removed)
         </p>
       </section>
-
-      <!-- Panel: Placeholder for future admin content -->
       <section class="panel">
         <div class="panel__hd">
           <h3>Management</h3>

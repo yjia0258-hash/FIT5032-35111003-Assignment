@@ -84,7 +84,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 // Mapbox Geocoding SDK
 import mbxSdk from '@mapbox/mapbox-sdk/services/geocoding'
 
-// (Optional) Firestore persistence (kept in case you re-enable "Save Trip" later)
+
 import { getAuth } from 'firebase/auth'
 import { getFirestore, doc, setDoc } from 'firebase/firestore'
 
@@ -112,17 +112,17 @@ const originQuery = ref('')
 const destQuery   = ref('')
 const originSuggest = ref([])
 const destSuggest   = ref([])
-const origin = ref(null) // { name, center: [lng, lat] }
+const origin = ref(null) 
 const dest   = ref(null)
 const mode   = ref('driving')
 const err    = ref('')
 
-// Kept for potential "saveTrip" usage; not shown in UI now
+
 const trip     = ref(null)
 const saveMsg  = ref('')
 const canSave  = true
 
-/** Debounced geocoding search */
+
 let t1 = 0, t2 = 0
 const debouncedSearch = (which) => {
   const t = Date.now()
@@ -135,7 +135,7 @@ const debouncedSearch = (which) => {
   }
 }
 
-/** Helpers */
+
 const mins = (sec) => Math.round(sec / 60)
 const flyTo = (center) => { if (map) map.flyTo({ center, zoom: 14 }) }
 
@@ -145,7 +145,6 @@ function clearRoute() {
   if (map.getSource('route-src')) map.removeSource('route-src')
 }
 
-/** Map init */
 onMounted(() => {
   if (!MAPBOX_TOKEN) {
     err.value = 'Mapbox token missing. Please set VITE_MAPBOX_TOKEN in .env.local.'
@@ -161,7 +160,7 @@ onMounted(() => {
 
   map.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
-  // Surface token/URL errors to the UI (403/401 etc.)
+  
   map.on('error', (e) => {
     if (e && e.error && e.error.status) {
       console.warn('[mapbox error]', e.error.status, e.error.url || '', e.error.message || '')
@@ -174,7 +173,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => { if (map) map.remove() })
 
-/** Geocoding search */
+
 async function search(which) {
   try {
     if (!geocodingClient) {
@@ -283,7 +282,7 @@ async function buildRoute() {
   }
 }
 
-/** Optional: save trip to Firestore (not shown in UI) */
+
 async function saveTrip() {
   try {
     const user = getAuth().currentUser
@@ -305,7 +304,7 @@ async function saveTrip() {
   }
 }
 
-/** Clear everything */
+
 function clearAll() {
   origin.value = null
   dest.value = null
@@ -322,7 +321,7 @@ function clearAll() {
 </script>
 
 <style scoped>
-/* Page layout: controls on top, map at bottom */
+
 .map-page {
   display: flex;
   flex-direction: column;
@@ -330,7 +329,7 @@ function clearAll() {
   background: #f8fafc;
 }
 
-/* Controls panel */
+
 .panel {
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
@@ -344,7 +343,7 @@ function clearAll() {
   font-weight: 700;
 }
 
-/* Inputs */
+
 .field {
   margin-bottom: 14px;
   position: relative;
@@ -356,7 +355,7 @@ function clearAll() {
   padding: 8px 10px;
 }
 
-/* Autocomplete dropdown */
+
 .suggest {
   position: absolute;
   left: 0; right: 0;
@@ -376,7 +375,7 @@ function clearAll() {
   background: #f3f4f6;
 }
 
-/* Row & buttons */
+
 .row { display: flex; gap: 8px; align-items: flex-end; }
 .col { flex: 1; }
 .btns { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -394,14 +393,12 @@ function clearAll() {
 }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* Error text */
+
 .err { color: #b91c1c; margin-top: 10px; }
 
-/* Map container */
 .map-wrap { position: relative; height: 420px; }
 .map { position: absolute; inset: 0; }
 
-/* Responsive */
 @media (max-width: 480px) {
   .map-wrap { height: 320px; }
 }

@@ -12,7 +12,7 @@
       Please complete the fields below. Required fields are marked with “*”.
     </p>
 
-    <!-- Global SR-visible alert (success/error). Focus moves here after submit -->
+    
     <div
       v-if="globalMsg"
       ref="srAlert"
@@ -107,7 +107,7 @@
                 </div>
               </div>
 
-              <!-- Phone (optional) -->
+         
               <div class="col-md-6">
                 <label for="phone" class="form-label">Phone (optional)</label>
                 <input
@@ -200,14 +200,14 @@
 </template>
 
 <script setup>
-// Vue
+
 import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
-// Security: sanitize free text to prevent XSS
+
 import DOMPurify from 'dompurify'
 
-// Firebase Auth
+
 import { auth } from '@/lib/firebase'
 import {
   createUserWithEmailAndPassword,
@@ -217,7 +217,7 @@ import {
 
 const router = useRouter()
 
-/* ---------- Form state ---------- */
+
 const model = ref({
   username: '',
   password: '',
@@ -244,12 +244,12 @@ const touched = ref({
 
 const submitting = ref(false)
 
-/* ---------- A11y: global alert state ---------- */
+
 const globalMsg = ref('')
 const isError = ref(false)
 const srAlert = ref(null)
 
-/* ---------- Validators ---------- */
+
 const checkName = () => {
   const v = model.value.username?.trim() || ''
   if (!v) errs.value.username = 'Username is required.'
@@ -290,7 +290,6 @@ const checkPhone = () => {
   else errs.value.phone = null
 }
 
-/* ---------- Debounced checks ---------- */
 let _nameTick = 0, _pwdTick = 0, _emailTick = 0, _phoneTick = 0
 const checkNameDebounced = () => { const t = ++_nameTick; setTimeout(() => t === _nameTick && touched.value.username && checkName(), 120) }
 const checkPasswordDebounced = () => { const t = ++_pwdTick; setTimeout(() => t === _pwdTick && touched.value.password && checkPassword(), 120) }
@@ -299,19 +298,19 @@ const checkPhoneDebounced = () => { const t = ++_phoneTick; setTimeout(() => t =
 
 const markTouched = (key) => { touched.value[key] = true }
 
-/* ---------- Submit enabled ---------- */
+
 const canSubmit = computed(() =>
   !errs.value.username && !errs.value.password && !errs.value.email && !errs.value.phone &&
   model.value.username && model.value.password && model.value.email
 )
 
-/* ---------- Submit ---------- */
+
 const onSubmit = async () => {
-  // reset live region
+
   globalMsg.value = ''
   isError.value = false
 
-  // validate
+
   touched.value = { username: true, password: true, email: true, phone: true }
   checkName(); checkPassword(); checkEmail(); checkPhone()
 
@@ -327,37 +326,36 @@ const onSubmit = async () => {
   try {
     submitting.value = true
 
-    // sanitize free-text to prevent XSS
+
     const safeReason = DOMPurify.sanitize(model.value.reason || '', {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: []
     })
-    // (You can store safeReason later if needed)
 
-    // Firebase registration (signs the user in)
+
+
     const cred = await createUserWithEmailAndPassword(
       auth,
       model.value.email.trim(),
       model.value.password
     )
 
-    // Try sending email verification
+
     try {
       await sendEmailVerification(cred.user)
     } catch (err) {
       console.warn('Email verification error:', err)
     }
 
-    // Inform users (SR + visual)
     globalMsg.value = 'Account created successfully. A verification email has been sent.'
     isError.value = false
     await nextTick()
     srAlert.value?.focus?.()
 
-    // Sign out after register (keeps flow consistent)
+ 
     try { await signOut(auth) } catch (e) { console.warn('signOut after register failed:', e) }
 
-    // Redirect to login
+
     router.replace('/FireLogin')
   } catch (e) {
     isError.value = true
@@ -371,13 +369,12 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
-/* High-contrast focus ring for keyboard users */
+
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid #1d4ed8;
   outline-offset: 2px;
 }
 
-/* Basic alerts (if you don't include Bootstrap alerts) */
 .alert { padding: .75rem 1rem; border-radius: .5rem; margin-bottom: 1rem; }
 .alert-danger { background:#fef2f2; color:#991b1b; border:1px solid #fee2e2; }
 .alert-success { background:#ecfdf5; color:#065f46; border:1px solid #d1fae5; }

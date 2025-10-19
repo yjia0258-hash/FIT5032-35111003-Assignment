@@ -25,7 +25,7 @@
             </tr>
           </thead>
 
-          <!-- Body is managed by DataTables -->
+      
           <tbody></tbody>
         </table>
       </div>
@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-// Bootstrap 5 + DataTables wrapper
+
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import $ from 'jquery'
 import 'datatables.net'
@@ -48,9 +48,7 @@ import 'datatables.net-bs5'
 
 const props = defineProps({
   title:   { type: String, default: '' },
-  // columns: [{ key:'field', label:'Label', searchable?:boolean, sortable?:boolean }]
   columns: { type: Array, required: true },
-  // rows: [{ field: value, ... }]
   rows:    { type: Array, required: true }
 })
 
@@ -60,7 +58,7 @@ let dt = null
 onMounted(() => {
   const $el = $(tableRef.value)
 
-  // Strict column mapping by "key" (safer than reading inner HTML)
+
   const dtColumns = (props.columns || []).map((c) => ({
     data: c.key,
     title: c.label,
@@ -80,7 +78,7 @@ onMounted(() => {
     pageLength: 10,
     lengthChange: false,
     responsive: true,
-    searching: true,          // global search box
+    searching: true,         
     orderCellsTop: true,
     autoWidth: false,
     deferRender: true,
@@ -94,7 +92,7 @@ onMounted(() => {
     }
   })
 
-  // Bind per-column search (second header row)
+ 
   dt.columns().every(function (colIdx) {
     const $input = $(tableRef.value)
       .find('thead tr.column-filters th')
@@ -126,7 +124,7 @@ watch(
 </script>
 
 <style scoped>
-/* Card look */
+
 .dt-card{
   border: 1px solid #fff;
   border-radius: 14px;
@@ -143,7 +141,7 @@ watch(
   padding: .9rem 1rem 1rem;
 }
 
-/* Table base */
+
 .table{ font-size: .94rem; }
 .table thead th{
   background: #fff;
@@ -157,7 +155,7 @@ th, td{
   vertical-align: middle !important;
 }
 
-/* Column filters row */
+
 .column-filters th{
   padding: .25rem .5rem !important;
   background: #fbfcfe;
@@ -170,7 +168,7 @@ th, td{
   font-size: .85rem;
 }
 
-/* DataTables controls */
+
 :deep(.dataTables_wrapper .dataTables_filter){ margin: 0; }
 :deep(.dataTables_wrapper .dataTables_filter label){ width: 100%; }
 :deep(.dataTables_wrapper .dataTables_filter input){
@@ -204,7 +202,7 @@ th, td{
   border-color: #0d6efd !important;
 }
 
-/* Mobile */
+
 @media (max-width: 576px){
   .column-filters input{ min-width: 100px; }
 }

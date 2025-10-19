@@ -2,7 +2,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, connectAuthEmulator } from 'firebase/auth'
 
-// Production config (keep as-is for deployment / class submission)
+// Production config 
 const firebaseConfig = {
   apiKey: 'AIzaSyDTmx5BaKGK7x8A7GxCQWtbZlWq7J2YdkI',
   authDomain: 'fit5032-assignmnet3.firebaseapp.com',

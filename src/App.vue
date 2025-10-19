@@ -25,7 +25,7 @@ onBeforeUnmount(() => { if (unsubscribe) unsubscribe() })
 const hideNavOn = ['/FireLogin', '/FireRegister']
 const showNav = computed(() => !hideNavOn.includes(route.path))
 
-// (Optional) role, integrate with claims/Firestore if needed
+
 const isAdmin = computed(() => false)
 
 // Logout
@@ -68,15 +68,15 @@ async function onLogout() {
 </template>
 
 <style scoped>
-/* ===== Layout ===== */
+
 .app{
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f8fafc; /* subtle app bg */
+  background: #f8fafc; 
 }
 
-/* Sticky topbar with centered content */
+
 .topbar{
   position: sticky; 
   top: 0;
@@ -115,7 +115,7 @@ async function onLogout() {
   margin: 0 auto;
 }
 
-/* Buttons */
+
 .btn{
   border: 1px solid transparent;
   padding: 6px 12px;
@@ -128,7 +128,7 @@ async function onLogout() {
 }
 .btn.ghost{
   background: transparent;
-  border-color: #d1d5db; /* gray-300 */
+  border-color: #d1d5db; 
 }
 .btn.ghost:hover{ background: #f3f4f6; }
 .btn.outline{
@@ -149,20 +149,19 @@ async function onLogout() {
   color: #fff;
 }
 
-/* Active route highlight */
+
 :deep(a.router-link-exact-active.btn.ghost){
   border-color: #0d6efd;
   color: #0d6efd;
   box-shadow: 0 0 0 2px rgba(13,110,253,0.12);
 }
 
-/* Keyboard focus visible */
+
 .btn:focus-visible, :deep(a.btn:focus-visible){
   outline: none;
   box-shadow: 0 0 0 3px rgba(13,110,253,0.35);
 }
 
-/* Mobile tweaks */
 @media (max-width: 640px){
   .topbar__inner{ padding: 8px 12px; gap: 8px; }
   .btn{ padding: 6px 10px; }

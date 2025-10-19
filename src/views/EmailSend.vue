@@ -89,7 +89,7 @@ const NEED_AUTH =
   API_BASE.startsWith('http://127.0.0.1') ||
   API_BASE.includes('cloudfunctions.net')
 
-const MAX_FILE_BYTES = 10 * 1024 * 1024 // 10 MB
+const MAX_FILE_BYTES = 10 * 1024 * 1024 
 
 async function fileToBase64(file) {
   const buf = await file.arrayBuffer()
@@ -162,7 +162,7 @@ async function send() {
       body: JSON.stringify(payload),
       signal: controller.signal
     }).catch((e) => {
-      // Fetch-level error
+
       throw new Error(e?.name === 'AbortError' ? 'Request timed out.' : (e?.message || 'Network error'))
     })
     clearTimeout(timer)
